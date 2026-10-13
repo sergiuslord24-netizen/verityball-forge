@@ -1,0 +1,5 @@
+{
+  "talk":       { "sounds": [ { "name": "verityball:talk",       "stream": false } ] },
+  "creepytalk": { "sounds": [ { "name": "verityball:creepytalk", "stream": false } ] },
+  "dance":      { "sounds": [ { "name": "verityball:dance",      "stream": false } ] }
+}

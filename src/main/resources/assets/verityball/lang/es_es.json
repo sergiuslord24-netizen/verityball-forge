@@ -1,0 +1,13 @@
+{
+  "entity.verityball.verity": "Verity",
+  "item.verityball.verity_spawn_egg": "Huevo generador de Verity",
+  "gui.verityball.title": "Hola, soy Verity!",
+  "gui.verityball.state.idle": "Detener / Quieta",
+  "gui.verityball.state.talk": "Hablar",
+  "gui.verityball.state.its_coming": "It's Coming",
+  "gui.verityball.state.dance": "Bailar!",
+  "gui.verityball.state.face1": "Cara 1",
+  "gui.verityball.state.face2": "Cara 2 (sospechosa)",
+  "gui.verityball.state.face3": "Cara 3 (aburrida)",
+  "gui.verityball.rainbow": "Arcoiris"
+}

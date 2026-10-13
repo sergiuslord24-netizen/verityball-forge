@@ -1,0 +1,5 @@
+Pon en esta carpeta tus sonidos en formato .ogg con estos nombres exactos:
+  talk.ogg        (al pulsar "Hablar")
+  creepytalk.ogg  (al pulsar "It's Coming", se repite en bucle)
+  dance.ogg       (al pulsar "Bailar", se repite en bucle)
+Si falta alguno, el mod funciona igual pero sin ese sonido.

@@ -1,0 +1,13 @@
+{
+  "entity.verityball.verity": "Verity",
+  "item.verityball.verity_spawn_egg": "Verity Spawn Egg",
+  "gui.verityball.title": "Hello I'm Verity!",
+  "gui.verityball.state.idle": "Stop / Idle",
+  "gui.verityball.state.talk": "Talk",
+  "gui.verityball.state.its_coming": "It's Coming",
+  "gui.verityball.state.dance": "Dance!",
+  "gui.verityball.state.face1": "Face 1",
+  "gui.verityball.state.face2": "Face 2 (sus)",
+  "gui.verityball.state.face3": "Face 3 (bored)",
+  "gui.verityball.rainbow": "Rainbow"
+}
