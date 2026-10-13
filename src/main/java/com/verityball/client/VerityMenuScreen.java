@@ -1,6 +1,7 @@
 package com.verityball.client;
 
 import com.verityball.VerityState;
+import com.verityball.VerityVariant;
 import com.verityball.entity.VerityEntity;
 import com.verityball.network.ModNetwork;
 import com.verityball.network.SetStatePacket;
@@ -14,10 +15,19 @@ import net.minecraft.network.chat.MutableComponent;
 /** Menú que se abre al hacer clic derecho sobre Verity. */
 public class VerityMenuScreen extends Screen {
     private final VerityEntity verity;
+    /** Variante mostrada en el botón (se actualiza al instante, sin cerrar el menú). */
+    private VerityVariant shownVariant;
 
     public VerityMenuScreen(VerityEntity verity) {
         super(Component.translatable("gui.verityball.title"));
         this.verity = verity;
+        this.shownVariant = verity.getVariant();
+    }
+
+    private static Component variantLabel(VerityVariant variant) {
+        return Component.translatable("gui.verityball.variant")
+                .append(Component.literal(": "))
+                .append(Component.translatable("variant.verityball." + variant.key));
     }
 
     @Override
@@ -25,7 +35,7 @@ public class VerityMenuScreen extends Screen {
         final int w = 150, h = 20, gap = 4;
         final int left = this.width / 2 - w - gap / 2;
         final int right = this.width / 2 + gap / 2;
-        final int top = this.height / 2 - (4 * (h + gap)) / 2;
+        final int top = this.height / 2 - (5 * (h + gap)) / 2;
 
         VerityState[] order = {
                 VerityState.TALK, VerityState.ITS_COMING, VerityState.DANCE, VerityState.IDLE,
@@ -47,6 +57,15 @@ public class VerityMenuScreen extends Screen {
         if (verity.isRainbow()) rainbow = rainbow.withStyle(ChatFormatting.GREEN);
         this.addRenderableWidget(Button.builder(rainbow, b -> send(SetStatePacket.TOGGLE_RAINBOW))
                 .bounds(right, top + 3 * (h + gap), w, h).build());
+
+        // Selector de variante: no cierra el menú, así se puede ir probando una por una
+        this.addRenderableWidget(Button.builder(variantLabel(shownVariant), b -> {
+                    shownVariant = shownVariant.next();
+                    b.setMessage(variantLabel(shownVariant));
+                    ModNetwork.CHANNEL.sendToServer(
+                            new SetStatePacket(verity.getId(), SetStatePacket.SET_VARIANT_BASE + shownVariant.id));
+                })
+                .bounds(left, top + 4 * (h + gap), 2 * w + gap, h).build());
     }
 
     private void send(int action) {
@@ -57,7 +76,7 @@ public class VerityMenuScreen extends Screen {
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(g);
-        g.drawCenteredString(this.font, this.title, this.width / 2, this.height / 2 - 70, 0xFED905);
+        g.drawCenteredString(this.font, this.title, this.width / 2, this.height / 2 - 78, 0xFED905);
         super.render(g, mouseX, mouseY, partialTick);
     }
 

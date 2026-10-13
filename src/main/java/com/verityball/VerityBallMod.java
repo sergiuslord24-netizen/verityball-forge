@@ -2,10 +2,13 @@ package com.verityball;
 
 import com.verityball.entity.VerityEntity;
 import com.verityball.network.ModNetwork;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.ForgeSpawnEggItem;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
@@ -56,7 +59,16 @@ public class VerityBallMod {
 
     private void onCreativeTab(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.SPAWN_EGGS) {
-            event.accept(VERITY_SPAWN_EGG);
+            // Un huevo por variante: el huevo lleva EntityTag con la variante elegida
+            for (VerityVariant variant : VerityVariant.values()) {
+                ItemStack egg = new ItemStack(VERITY_SPAWN_EGG.get());
+                CompoundTag entityTag = new CompoundTag();
+                entityTag.putInt("VerityVariant", variant.id);
+                egg.getOrCreateTag().put("EntityTag", entityTag);
+                egg.setHoverName(Component.translatable("item.verityball.verity_spawn_egg." + variant.key)
+                        .withStyle(style -> style.withItalic(false)));
+                event.accept(egg);
+            }
         }
     }
 }

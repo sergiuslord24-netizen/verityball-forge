@@ -9,5 +9,16 @@
   "gui.verityball.state.face1": "Face 1",
   "gui.verityball.state.face2": "Face 2 (sus)",
   "gui.verityball.state.face3": "Face 3 (bored)",
-  "gui.verityball.rainbow": "Rainbow"
+  "gui.verityball.rainbow": "Rainbow",
+  "gui.verityball.variant": "Variant",
+  "variant.verityball.verity": "Verity",
+  "variant.verityball.falsity": "Falsity",
+  "variant.verityball.lovity": "Lovity",
+  "variant.verityball.morbosity": "Morbosity",
+  "variant.verityball.peruanity": "Peruanity",
+  "item.verityball.verity_spawn_egg.verity": "Verity Spawn Egg",
+  "item.verityball.verity_spawn_egg.falsity": "Falsity Spawn Egg",
+  "item.verityball.verity_spawn_egg.lovity": "Lovity Spawn Egg",
+  "item.verityball.verity_spawn_egg.morbosity": "Morbosity Spawn Egg",
+  "item.verityball.verity_spawn_egg.peruanity": "Peruanity Spawn Egg"
 }

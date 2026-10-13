@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.verityball.VerityBallMod;
+import com.verityball.VerityVariant;
 import com.verityball.entity.VerityEntity;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -24,9 +25,16 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
 
     private static final Map<String, ResourceLocation> TEXTURES = new HashMap<>();
 
-    private static ResourceLocation tex(String name) {
-        return TEXTURES.computeIfAbsent(name,
+    /** Textura de una parte (base, face_idle...) para la variante dada: textures/entity/&lt;variante&gt;/&lt;parte&gt;.png */
+    private static ResourceLocation tex(VerityVariant variant, String name) {
+        return TEXTURES.computeIfAbsent(variant.key + "/" + name,
                 n -> new ResourceLocation(VerityBallMod.MODID, "textures/entity/" + n + ".png"));
+    }
+
+    /** Esfera blanca: con el arcoíris activo el color sale puro, sin mezclarse con el color de la variante. */
+    private static ResourceLocation whiteSphere() {
+        return TEXTURES.computeIfAbsent("base_white",
+                n -> new ResourceLocation(VerityBallMod.MODID, "textures/entity/base_white.png"));
     }
 
     // Colores del arcoíris (igual que tu script de Figura)
@@ -42,7 +50,7 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
 
     @Override
     public ResourceLocation getTextureLocation(VerityEntity entity) {
-        return tex("base");
+        return tex(entity.getVariant(), "base");
     }
 
     @Override
@@ -66,8 +74,10 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
                 for (int i = 0; i < 3; i++) sphereColor[i] = c1[i] + (c2[i] - c1[i]) * blend;
             }
 
+            VerityVariant variant = entity.getVariant();
+            boolean rainbow = entity.isRainbow();
             for (VerityModel.Bone bone : model.roots) {
-                renderBone(bone, pose, ps, buffers, light, sphereColor);
+                renderBone(bone, pose, ps, buffers, light, sphereColor, variant, rainbow);
             }
             ps.popPose();
         }
@@ -75,7 +85,8 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
     }
 
     private void renderBone(VerityModel.Bone bone, Map<String, float[]> pose, PoseStack ps,
-                            MultiBufferSource buffers, int light, float[] sphereColor) {
+                            MultiBufferSource buffers, int light, float[] sphereColor,
+                            VerityVariant variant, boolean rainbow) {
         float[] p = pose.get(bone.name);
         if (p == null) p = VerityModel.restPose();
 
@@ -101,7 +112,8 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
             VertexConsumer vc = null;
             for (VerityModel.Quad q : bone.quads) {
                 if (vc == null || !q.tex.equals(lastTex)) {
-                    vc = buffers.getBuffer(RenderType.entityCutoutNoCull(tex(q.tex)));
+                    ResourceLocation texture = (rainbow && q.tex.equals("base")) ? whiteSphere() : tex(variant, q.tex);
+                    vc = buffers.getBuffer(RenderType.entityCutoutNoCull(texture));
                     lastTex = q.tex;
                 }
                 for (int i = 0; i < 4; i++) {
@@ -117,7 +129,7 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
         }
 
         for (VerityModel.Bone child : bone.children) {
-            renderBone(child, pose, ps, buffers, light, sphereColor);
+            renderBone(child, pose, ps, buffers, light, sphereColor, variant, rainbow);
         }
         ps.popPose();
     }

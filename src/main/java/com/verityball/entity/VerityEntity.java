@@ -1,6 +1,7 @@
 package com.verityball.entity;
 
 import com.verityball.VerityState;
+import com.verityball.VerityVariant;
 import com.verityball.client.ClientHooks;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -25,6 +26,8 @@ public class VerityEntity extends PathfinderMob {
             SynchedEntityData.defineId(VerityEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_RAINBOW =
             SynchedEntityData.defineId(VerityEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_VARIANT =
+            SynchedEntityData.defineId(VerityEntity.class, EntityDataSerializers.INT);
 
     /** Tick (del cliente) en el que empezó el estado actual; sirve para animar. */
     public int stateStartTick = 0;
@@ -47,6 +50,7 @@ public class VerityEntity extends PathfinderMob {
         super.defineSynchedData();
         this.entityData.define(DATA_STATE, 0);
         this.entityData.define(DATA_RAINBOW, false);
+        this.entityData.define(DATA_VARIANT, 0);
     }
 
     public VerityState getState() {
@@ -67,6 +71,14 @@ public class VerityEntity extends PathfinderMob {
 
     public void setRainbow(boolean value) {
         this.entityData.set(DATA_RAINBOW, value);
+    }
+
+    public VerityVariant getVariant() {
+        return VerityVariant.byId(this.entityData.get(DATA_VARIANT));
+    }
+
+    public void setVariant(VerityVariant variant) {
+        this.entityData.set(DATA_VARIANT, variant.id);
     }
 
     @Override
@@ -107,6 +119,7 @@ public class VerityEntity extends PathfinderMob {
         super.addAdditionalSaveData(tag);
         tag.putInt("VerityState", getStateId());
         tag.putBoolean("VerityRainbow", isRainbow());
+        tag.putInt("VerityVariant", getVariant().id);
     }
 
     @Override
@@ -114,5 +127,6 @@ public class VerityEntity extends PathfinderMob {
         super.readAdditionalSaveData(tag);
         this.entityData.set(DATA_STATE, tag.getInt("VerityState"));
         this.entityData.set(DATA_RAINBOW, tag.getBoolean("VerityRainbow"));
+        this.entityData.set(DATA_VARIANT, VerityVariant.byId(tag.getInt("VerityVariant")).id);
     }
 }

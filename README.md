@@ -4,6 +4,14 @@ Mod para **Minecraft 1.20.1 (Forge 47.3.0)**. Agrega a Verity como mob quieto: c
 
 Modelo y animaciones: RoseRocket.
 
+## Variantes
+
+Verity, Falsity, Lovity, Morbosity y Peruanity (mismo modelo y animaciones, distinto color y caras).
+
+- **Huevos generadores:** cada variante tiene su huevo en la pestana de huevos del creativo.
+- **Menu:** clic derecho sobre ella y pulsa el boton **Variante** para cambiarla al instante.
+- **Comando:** `/summon verityball:verity ~ ~ ~ {VerityVariant:2}` (0 Verity, 1 Falsity, 2 Lovity, 3 Morbosity, 4 Peruanity).
+
 ## Obtener el .jar
 
 1. Ve a la pestana **Actions** de este repositorio.

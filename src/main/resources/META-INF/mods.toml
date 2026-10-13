@@ -9,7 +9,8 @@ displayName="Verity Ball"
 authors="RoseRocket (modelo y animaciones)"
 description='''
 Verity (la bola amarilla) como mob que se queda quieto.
-Clic derecho para abrir el menu: hablar, bailar, It's Coming, caras y arcoiris.
+Clic derecho para abrir el menu: hablar, bailar, It's Coming, caras, arcoiris y variantes
+(Verity, Falsity, Lovity, Morbosity y Peruanity).
 '''
 
 [[dependencies.verityball]]

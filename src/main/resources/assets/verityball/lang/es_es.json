@@ -9,5 +9,16 @@
   "gui.verityball.state.face1": "Cara 1",
   "gui.verityball.state.face2": "Cara 2 (sospechosa)",
   "gui.verityball.state.face3": "Cara 3 (aburrida)",
-  "gui.verityball.rainbow": "Arcoiris"
+  "gui.verityball.rainbow": "Arcoiris",
+  "gui.verityball.variant": "Variante",
+  "variant.verityball.verity": "Verity",
+  "variant.verityball.falsity": "Falsity",
+  "variant.verityball.lovity": "Lovity",
+  "variant.verityball.morbosity": "Morbosity",
+  "variant.verityball.peruanity": "Peruanity",
+  "item.verityball.verity_spawn_egg.verity": "Huevo generador de Verity",
+  "item.verityball.verity_spawn_egg.falsity": "Huevo generador de Falsity",
+  "item.verityball.verity_spawn_egg.lovity": "Huevo generador de Lovity",
+  "item.verityball.verity_spawn_egg.morbosity": "Huevo generador de Morbosity",
+  "item.verityball.verity_spawn_egg.peruanity": "Huevo generador de Peruanity"
 }
