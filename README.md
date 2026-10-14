@@ -16,8 +16,22 @@ Verity, Falsity, Lovity, Morbosity y Peruanity (mismo modelo y animaciones, dist
 
 1. Ve a la pestana **Actions** de este repositorio.
 2. Abre la ultima ejecucion de **Compilar mod** (si no hay, pulsa *Run workflow*).
-3. Abajo, en **Artifacts**, descarga `verityball-jar`. Dentro esta `verityball-1.0.0.jar`.
+3. Abajo, en **Artifacts**, descarga `verityball-jar`. Dentro esta `verityball-1.1.0.jar`.
 4. Copia el `.jar` a la carpeta `mods` de tu Minecraft con Forge 1.20.1.
+
+## Cogerlas en la mano
+
+Apunta a una Verity (hasta 5 bloques) y pulsa **E** (se puede cambiar en Opciones > Controles) para llevarla en la mano.
+Pulsa **E** otra vez para soltarla donde apuntas. Un aviso en pantalla te recuerda la tecla.
+Si la tecla de coger es la misma que la del inventario, apuntando a una Verity gana coger; mira a otro lado para abrir el inventario.
+
+## Mirada
+
+Todas las Verity giran la cara hacia ti (y la inclinan hacia tus ojos) mientras estes a menos de 32 bloques.
+
+## Peruanity
+
+Lleva su chullo (gorro de lana peruano) con orejeras, trenzas, borlas y pompon.
 
 ## Sonidos
 
@@ -32,7 +46,7 @@ Necesitas Java 17 y Gradle 8.x:
 gradle build
 ```
 
-El resultado queda en `build/libs/verityball-1.0.0.jar`.
+El resultado queda en `build/libs/verityball-1.1.0.jar`.
 
 ## Ajustes
 

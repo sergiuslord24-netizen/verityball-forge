@@ -6,6 +6,8 @@ import com.mojang.math.Axis;
 import com.verityball.VerityBallMod;
 import com.verityball.VerityVariant;
 import com.verityball.entity.VerityEntity;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -13,6 +15,8 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
@@ -22,6 +26,13 @@ import java.util.Map;
 public class VerityRenderer extends EntityRenderer<VerityEntity> {
     /** Cambia este número para hacer a Verity más grande o más pequeña. */
     public static final float SCALE = 1.0F;
+    /** Tamaño relativo cuando la llevas en la mano. */
+    public static final float HELD_SCALE = 0.5F;
+    /** Altura del centro de la esfera sobre los pies (4.4 px de Blockbench). */
+    private static final float CENTER_Y = 4.4F / 16.0F;
+
+    /** A qué distancia (bloques) empieza a seguirte con la mirada. */
+    private static final double LOOK_RANGE = 32.0D;
 
     private static final Map<String, ResourceLocation> TEXTURES = new HashMap<>();
 
@@ -53,14 +64,72 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
         return tex(entity.getVariant(), "base");
     }
 
+    /**
+     * Si la lleva un jugador, la dibujamos pegada a su mano usando la posición suavizada del jugador
+     * (así no va a tirones aunque la posición del servidor llegue cada pocos ticks).
+     */
+    @Override
+    public Vec3 getRenderOffset(VerityEntity entity, float partialTick) {
+        Player holder = entity.getHolderPlayer();
+        if (holder == null) return Vec3.ZERO;
+        Vec3 hand = VerityEntity.handCenter(holder, partialTick);
+        double ex = Mth.lerp((double) partialTick, entity.xOld, entity.getX());
+        double ey = Mth.lerp((double) partialTick, entity.yOld, entity.getY());
+        double ez = Mth.lerp((double) partialTick, entity.zOld, entity.getZ());
+        return new Vec3(hand.x - ex, hand.y - CENTER_Y * SCALE * HELD_SCALE - ey, hand.z - ez);
+    }
+
+    /** Una vez por tick: gira suavemente la cara hacia el jugador local (yaw) y la inclina hacia sus ojos (pitch). */
+    private static void updateLook(VerityEntity entity) {
+        if (entity.lookTick == entity.tickCount) return;
+
+        float targetYaw = entity.getYRot();
+        float targetPitch = 0.0F;
+        LocalPlayer me = Minecraft.getInstance().player;
+        if (me != null) {
+            double dx = me.getX() - entity.getX();
+            double dz = me.getZ() - entity.getZ();
+            double dy = me.getEyeY() - (entity.getY() + CENTER_Y * SCALE * (entity.isHeld() ? HELD_SCALE : 1.0F));
+            double horizSq = dx * dx + dz * dz;
+            if (horizSq + dy * dy < LOOK_RANGE * LOOK_RANGE && horizSq > 1.0E-4D) {
+                targetYaw = (float) (Mth.atan2(dz, dx) * (180.0D / Math.PI)) - 90.0F;
+                targetPitch = Mth.clamp((float) Math.toDegrees(Math.atan2(dy, Math.sqrt(horizSq))), -30.0F, 40.0F);
+            }
+        }
+
+        if (entity.lookTick < 0) { // primera vez: mirar directo, sin dar vueltas
+            entity.lookYaw = entity.lookYawO = targetYaw;
+            entity.lookPitch = entity.lookPitchO = targetPitch;
+        } else {
+            entity.lookYawO = entity.lookYaw;
+            entity.lookPitchO = entity.lookPitch;
+            float dYaw = Mth.wrapDegrees(targetYaw - entity.lookYaw);
+            entity.lookYaw += Mth.clamp(dYaw * 0.35F, -25.0F, 25.0F);
+            entity.lookPitch += Mth.clamp((targetPitch - entity.lookPitch) * 0.35F, -10.0F, 10.0F);
+        }
+        entity.lookTick = entity.tickCount;
+    }
+
     @Override
     public void render(VerityEntity entity, float entityYaw, float partialTick, PoseStack ps,
                        MultiBufferSource buffers, int light) {
         VerityModel model = VerityModel.get();
         if (model != null) {
+            boolean held = entity.isHeld();
+            float scale = SCALE * (held ? HELD_SCALE : 1.0F);
+            this.shadowRadius = held ? 0.0F : 0.3F;
+
+            updateLook(entity);
+            float yaw = Mth.rotLerp(partialTick, entity.lookYawO, entity.lookYaw);
+            float pitch = Mth.lerp(partialTick, entity.lookPitchO, entity.lookPitch);
+
             ps.pushPose();
-            ps.mulPose(Axis.YP.rotationDegrees(180.0F - Mth.rotLerp(partialTick, entity.yRotO, entity.getYRot())));
-            ps.scale(SCALE, SCALE, SCALE);
+            ps.mulPose(Axis.YP.rotationDegrees(180.0F - yaw));
+            ps.scale(scale, scale, scale);
+            // inclinar la cara hacia arriba/abajo girando alrededor del centro de la esfera
+            ps.translate(0.0F, CENTER_Y, 0.0F);
+            ps.mulPose(Axis.XP.rotationDegrees(pitch));
+            ps.translate(0.0F, -CENTER_Y, 0.0F);
 
             float seconds = Math.max(0f, entity.tickCount - entity.stateStartTick + partialTick) / 20.0F;
             Map<String, float[]> pose = model.computePose(entity.getState(), seconds);
@@ -87,6 +156,9 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
     private void renderBone(VerityModel.Bone bone, Map<String, float[]> pose, PoseStack ps,
                             MultiBufferSource buffers, int light, float[] sphereColor,
                             VerityVariant variant, boolean rainbow) {
+        // Accesorios de una sola variante: el hueso "hat_<variante>" solo se dibuja en esa variante
+        if (bone.name.startsWith("hat_") && !bone.name.equals("hat_" + variant.key)) return;
+
         float[] p = pose.get(bone.name);
         if (p == null) p = VerityModel.restPose();
 

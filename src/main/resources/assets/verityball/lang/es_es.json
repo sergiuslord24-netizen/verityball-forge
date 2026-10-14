@@ -20,5 +20,9 @@
   "item.verityball.verity_spawn_egg.falsity": "Huevo generador de Falsity",
   "item.verityball.verity_spawn_egg.lovity": "Huevo generador de Lovity",
   "item.verityball.verity_spawn_egg.morbosity": "Huevo generador de Morbosity",
-  "item.verityball.verity_spawn_egg.peruanity": "Huevo generador de Peruanity"
+  "item.verityball.verity_spawn_egg.peruanity": "Huevo generador de Peruanity",
+  "key.verityball.pickup": "Coger / soltar a Verity",
+  "key.categories.verityball": "Verity Ball",
+  "gui.verityball.hint.pickup": "[%s] Coger a Verity",
+  "gui.verityball.hint.drop": "[%s] Soltar a Verity"
 }

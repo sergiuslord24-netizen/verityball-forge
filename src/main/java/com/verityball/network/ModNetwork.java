@@ -6,7 +6,7 @@ import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public class ModNetwork {
-    private static final String PROTOCOL = "1";
+    private static final String PROTOCOL = "2";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(VerityBallMod.MODID, "main"),
             () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
@@ -14,5 +14,7 @@ public class ModNetwork {
     public static void register() {
         CHANNEL.registerMessage(0, SetStatePacket.class,
                 SetStatePacket::encode, SetStatePacket::decode, SetStatePacket::handle);
+        CHANNEL.registerMessage(1, PickupPacket.class,
+                PickupPacket::encode, PickupPacket::decode, PickupPacket::handle);
     }
 }

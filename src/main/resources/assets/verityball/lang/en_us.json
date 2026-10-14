@@ -20,5 +20,9 @@
   "item.verityball.verity_spawn_egg.falsity": "Falsity Spawn Egg",
   "item.verityball.verity_spawn_egg.lovity": "Lovity Spawn Egg",
   "item.verityball.verity_spawn_egg.morbosity": "Morbosity Spawn Egg",
-  "item.verityball.verity_spawn_egg.peruanity": "Peruanity Spawn Egg"
+  "item.verityball.verity_spawn_egg.peruanity": "Peruanity Spawn Egg",
+  "key.verityball.pickup": "Pick up / put down Verity",
+  "key.categories.verityball": "Verity Ball",
+  "gui.verityball.hint.pickup": "[%s] Pick up Verity",
+  "gui.verityball.hint.drop": "[%s] Put Verity down"
 }

@@ -4,13 +4,14 @@ license="All Rights Reserved"
 
 [[mods]]
 modId="verityball"
-version="1.0.0"
+version="1.1.0"
 displayName="Verity Ball"
 authors="RoseRocket (modelo y animaciones)"
 description='''
 Verity (la bola amarilla) como mob que se queda quieto.
 Clic derecho para abrir el menu: hablar, bailar, It's Coming, caras, arcoiris y variantes
 (Verity, Falsity, Lovity, Morbosity y Peruanity).
+Se pueden coger en la mano apuntandolas y pulsando E, y te siguen con la mirada.
 '''
 
 [[dependencies.verityball]]
