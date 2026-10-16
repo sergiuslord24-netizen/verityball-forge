@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.verityball.VerityBallMod;
+import com.verityball.VerityState;
 import com.verityball.VerityVariant;
 import com.verityball.entity.VerityEntity;
 import net.minecraft.client.Minecraft;
@@ -20,23 +21,20 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class VerityRenderer extends EntityRenderer<VerityEntity> {
-    /** Cambia este número para hacer a Verity más grande o más pequeña. */
-    public static final float SCALE = 1.0F;
-    /** Tamaño relativo cuando la llevas en la mano. */
-    public static final float HELD_SCALE = 0.5F;
-    /** Altura del centro de la esfera sobre los pies (4.4 px de Blockbench). */
-    private static final float CENTER_Y = 4.4F / 16.0F;
-
     /** A qué distancia (bloques) empieza a seguirte con la mirada. */
     private static final double LOOK_RANGE = 32.0D;
+    /** Por encima de esta velocidad (bloques/tick) se orienta según hacia dónde camina. */
+    private static final float MOVING_SPEED = 0.04F;
 
     private static final Map<String, ResourceLocation> TEXTURES = new HashMap<>();
 
-    /** Textura de una parte (base, face_idle...) para la variante dada: textures/entity/&lt;variante&gt;/&lt;parte&gt;.png */
+    /** Textura de una parte (base, face_idle, fem...) para la variante dada: textures/entity/&lt;variante&gt;/&lt;parte&gt;.png */
     private static ResourceLocation tex(VerityVariant variant, String name) {
         return TEXTURES.computeIfAbsent(variant.key + "/" + name,
                 n -> new ResourceLocation(VerityBallMod.MODID, "textures/entity/" + n + ".png"));
@@ -61,7 +59,14 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
 
     @Override
     public ResourceLocation getTextureLocation(VerityEntity entity) {
-        return tex(entity.getVariant(), "base");
+        VerityVariant v = entity.getVariant();
+        return tex(v, v.isFem() ? "fem" : "base");
+    }
+
+    /** Escala total con la que se dibuja (modelo, y más pequeña si va en la mano). */
+    private static float totalScale(VerityEntity entity) {
+        VerityVariant.Type t = entity.getVariant().type;
+        return t.scale * (entity.isHeld() ? t.heldScale : 1.0F);
     }
 
     /**
@@ -76,24 +81,37 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
         double ex = Mth.lerp((double) partialTick, entity.xOld, entity.getX());
         double ey = Mth.lerp((double) partialTick, entity.yOld, entity.getY());
         double ez = Mth.lerp((double) partialTick, entity.zOld, entity.getZ());
-        return new Vec3(hand.x - ex, hand.y - CENTER_Y * SCALE * HELD_SCALE - ey, hand.z - ez);
+        return new Vec3(hand.x - ex, hand.y - VerityEntity.heldAnchorDrop(entity.getVariant()) - ey, hand.z - ez);
     }
 
-    /** Una vez por tick: gira suavemente la cara hacia el jugador local (yaw) y la inclina hacia sus ojos (pitch). */
+    /**
+     * Una vez por tick: gira suavemente hacia donde toca. Si se está moviendo, mira hacia donde camina;
+     * si está quieta, mira al jugador local (yaw) y, la esfera, inclina la cara hacia sus ojos (pitch).
+     */
     private static void updateLook(VerityEntity entity) {
         if (entity.lookTick == entity.tickCount) return;
 
+        boolean fem = entity.getVariant().isFem();
         float targetYaw = entity.getYRot();
         float targetPitch = 0.0F;
+
+        double mx = entity.getX() - entity.xo, mz = entity.getZ() - entity.zo;
+        boolean moving = !entity.isHeld() && entity.moveSpeed > MOVING_SPEED && (mx * mx + mz * mz) > 1.0E-6D;
+
         LocalPlayer me = Minecraft.getInstance().player;
-        if (me != null) {
+        if (moving) {
+            targetYaw = (float) (Mth.atan2(mz, mx) * (180.0D / Math.PI)) - 90.0F;
+        } else if (me != null && entity.isLookingAtPlayers()) {
             double dx = me.getX() - entity.getX();
             double dz = me.getZ() - entity.getZ();
-            double dy = me.getEyeY() - (entity.getY() + CENTER_Y * SCALE * (entity.isHeld() ? HELD_SCALE : 1.0F));
+            float scale = totalScale(entity);
+            double dy = me.getEyeY() - (entity.getY() + (entity.getVariant().type.anchorY * scale));
             double horizSq = dx * dx + dz * dz;
             if (horizSq + dy * dy < LOOK_RANGE * LOOK_RANGE && horizSq > 1.0E-4D) {
                 targetYaw = (float) (Mth.atan2(dz, dx) * (180.0D / Math.PI)) - 90.0F;
-                targetPitch = Mth.clamp((float) Math.toDegrees(Math.atan2(dy, Math.sqrt(horizSq))), -30.0F, 40.0F);
+                if (!fem) { // la humanoide solo gira el cuerpo; la esfera además inclina la cara
+                    targetPitch = Mth.clamp((float) Math.toDegrees(Math.atan2(dy, Math.sqrt(horizSq))), -30.0F, 40.0F);
+                }
             }
         }
 
@@ -110,14 +128,38 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
         entity.lookTick = entity.tickCount;
     }
 
+    /** Animaciones que hay que combinar ahora mismo, de la base a la más prioritaria. */
+    private static List<VerityModel.Play> buildPlays(VerityEntity entity, float partialTick) {
+        List<VerityModel.Play> plays = new ArrayList<>();
+        VerityVariant.Type type = entity.getVariant().type;
+        float sinceState = Math.max(0f, entity.tickCount - entity.stateStartTick + partialTick) / 20.0F;
+
+        if (type == VerityVariant.Type.BALL) {
+            for (String name : entity.getState().animationsFor(type)) plays.add(new VerityModel.Play(name, sinceState));
+            return plays;
+        }
+
+        // Humanoide: "idle" siempre de base; si camina, caminar/correr; si está quieta, la animación del estado
+        float clock = (entity.tickCount + partialTick) / 20.0F;
+        plays.add(new VerityModel.Play("idle", clock));
+        if (!entity.isHeld() && entity.moveSpeed > 0.02F) {
+            float step = entity.walkClock + partialTick * (entity.moveSpeed / (entity.moveSpeed > 0.25F ? 0.30F : 0.20F)) / 20.0F;
+            plays.add(new VerityModel.Play(entity.moveSpeed > 0.25F ? "run" : "walk", step));
+        } else {
+            for (String name : entity.getState().animationsFor(type)) plays.add(new VerityModel.Play(name, sinceState));
+        }
+        return plays;
+    }
+
     @Override
     public void render(VerityEntity entity, float entityYaw, float partialTick, PoseStack ps,
                        MultiBufferSource buffers, int light) {
-        VerityModel model = VerityModel.get();
+        VerityVariant variant = entity.getVariant();
+        VerityModel model = VerityModel.get(variant.type);
         if (model != null) {
             boolean held = entity.isHeld();
-            float scale = SCALE * (held ? HELD_SCALE : 1.0F);
-            this.shadowRadius = held ? 0.0F : 0.3F;
+            float scale = totalScale(entity);
+            this.shadowRadius = held ? 0.0F : (variant.isFem() ? 0.4F : 0.3F);
 
             updateLook(entity);
             float yaw = Mth.rotLerp(partialTick, entity.lookYawO, entity.lookYaw);
@@ -126,16 +168,20 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
             ps.pushPose();
             ps.mulPose(Axis.YP.rotationDegrees(180.0F - yaw));
             ps.scale(scale, scale, scale);
-            // inclinar la cara hacia arriba/abajo girando alrededor del centro de la esfera
-            ps.translate(0.0F, CENTER_Y, 0.0F);
-            ps.mulPose(Axis.XP.rotationDegrees(pitch));
-            ps.translate(0.0F, -CENTER_Y, 0.0F);
+            if (!variant.isFem() && pitch != 0.0F) {
+                // inclinar la cara hacia arriba/abajo girando alrededor del centro de la esfera
+                float cy = variant.type.anchorY;
+                ps.translate(0.0F, cy, 0.0F);
+                ps.mulPose(Axis.XP.rotationDegrees(pitch));
+                ps.translate(0.0F, -cy, 0.0F);
+            }
 
-            float seconds = Math.max(0f, entity.tickCount - entity.stateStartTick + partialTick) / 20.0F;
-            Map<String, float[]> pose = model.computePose(entity.getState(), seconds);
+            Map<String, float[]> pose = model.computePose(buildPlays(entity, partialTick));
 
+            boolean rainbow = entity.isRainbow() && !variant.isFem();
+            boolean dead = entity.getState() == VerityState.DEAD;
             float[] sphereColor = {1f, 1f, 1f};
-            if (entity.isRainbow()) {
+            if (rainbow) {
                 float t = entity.tickCount + partialTick;
                 float blend = 0.5F * (1.0F + (float) Math.sin(2.0 * Math.PI * t / 120.0));
                 int idx = ((int) Math.floor(t / 60.0F)) % RAINBOW.length;
@@ -143,10 +189,8 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
                 for (int i = 0; i < 3; i++) sphereColor[i] = c1[i] + (c2[i] - c1[i]) * blend;
             }
 
-            VerityVariant variant = entity.getVariant();
-            boolean rainbow = entity.isRainbow();
             for (VerityModel.Bone bone : model.roots) {
-                renderBone(bone, pose, ps, buffers, light, sphereColor, variant, rainbow);
+                renderBone(bone, pose, ps, buffers, light, sphereColor, variant, rainbow, dead);
             }
             ps.popPose();
         }
@@ -155,7 +199,9 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
 
     private void renderBone(VerityModel.Bone bone, Map<String, float[]> pose, PoseStack ps,
                             MultiBufferSource buffers, int light, float[] sphereColor,
-                            VerityVariant variant, boolean rainbow) {
+                            VerityVariant variant, boolean rainbow, boolean dead) {
+        // La cara de muerto (XX) solo se dibuja en el estado DEAD
+        if (bone.name.equals("mouth_dead") && !dead) return;
         // Accesorios de una sola variante: el hueso "hat_<variante>" solo se dibuja en esa variante
         if (bone.name.startsWith("hat_") && !bone.name.equals("hat_" + variant.key)) return;
 
@@ -168,10 +214,10 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
         ps.pushPose();
         ps.translate(-p[3] / 16.0F, p[4] / 16.0F, p[5] / 16.0F);
         ps.translate(bone.px / 16.0F, bone.py / 16.0F, bone.pz / 16.0F);
-        // Convención de rotación de Blockbench: X e Y invertidas
-        ps.mulPose(Axis.ZP.rotationDegrees(p[2]));
-        ps.mulPose(Axis.YP.rotationDegrees(-p[1]));
-        ps.mulPose(Axis.XP.rotationDegrees(-p[0]));
+        // Rotación = reposo del hueso + animación. Convención de Blockbench: en la animación X e Y van invertidas.
+        ps.mulPose(Axis.ZP.rotationDegrees(bone.rz + p[2]));
+        ps.mulPose(Axis.YP.rotationDegrees(bone.ry - p[1]));
+        ps.mulPose(Axis.XP.rotationDegrees(bone.rx - p[0]));
         ps.scale(p[6], p[7], p[8]);
         ps.translate(-bone.px / 16.0F, -bone.py / 16.0F, -bone.pz / 16.0F);
 
@@ -201,7 +247,7 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
         }
 
         for (VerityModel.Bone child : bone.children) {
-            renderBone(child, pose, ps, buffers, light, sphereColor, variant, rainbow);
+            renderBone(child, pose, ps, buffers, light, sphereColor, variant, rainbow, dead);
         }
         ps.popPose();
     }

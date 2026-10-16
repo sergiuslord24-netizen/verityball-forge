@@ -12,8 +12,10 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.PathfinderMob;
@@ -25,9 +27,15 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 
+import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
-/** Verity: un mob que se queda quieto y se controla desde un menú. Se puede coger en la mano. */
+/**
+ * Verity: un mob que se queda quieto y se controla desde un menú.
+ * Se puede coger en la mano y, si se activa "Seguirme", camina (o bota) detrás del jugador.
+ */
 public class VerityEntity extends PathfinderMob {
     private static final EntityDataAccessor<Integer> DATA_STATE =
             SynchedEntityData.defineId(VerityEntity.class, EntityDataSerializers.INT);
@@ -38,9 +46,30 @@ public class VerityEntity extends PathfinderMob {
     /** Id de la entidad (jugador) que la lleva en la mano, o -1 si está suelta. No se guarda en el mundo. */
     private static final EntityDataAccessor<Integer> DATA_HOLDER =
             SynchedEntityData.defineId(VerityEntity.class, EntityDataSerializers.INT);
+    /** ¿Gira la cara hacia el jugador? (true por defecto; al apagarlo se queda mirando hacia donde estaba). */
+    private static final EntityDataAccessor<Boolean> DATA_LOOK =
+            SynchedEntityData.defineId(VerityEntity.class, EntityDataSerializers.BOOLEAN);
+    /** Jugador al que sigue (vacío = no sigue a nadie). */
+    private static final EntityDataAccessor<Optional<UUID>> DATA_FOLLOW =
+            SynchedEntityData.defineId(VerityEntity.class, EntityDataSerializers.OPTIONAL_UUID);
 
     /** Distancia máxima (en bloques) para cogerla. */
     public static final double PICKUP_REACH = 5.0D;
+
+    // ---- Seguir al jugador ----
+    /** Empieza a andar cuando está a más de esta distancia... */
+    private static final double FOLLOW_START = 3.5D;
+    /** ...y se para cuando llega a esta. */
+    private static final double FOLLOW_STOP = 2.2D;
+    /** A partir de aquí corre (humanoide). */
+    private static final double FOLLOW_RUN_DIST = 7.0D;
+    /** Si se queda más lejos que esto, se teletransporta junto al jugador. */
+    private static final double FOLLOW_TELEPORT_DIST = 24.0D;
+    /** Bloques por tick. */
+    private static final double SPEED_WALK = 0.20D, SPEED_RUN = 0.30D, SPEED_HOP = 0.17D;
+
+    /** Solo servidor: ahora mismo está yendo hacia el jugador. */
+    private boolean followMoving;
 
     /** Tick (del cliente) en el que empezó el estado actual; sirve para animar. */
     public int stateStartTick = 0;
@@ -48,6 +77,10 @@ public class VerityEntity extends PathfinderMob {
     // ---- Solo cliente: hacia dónde mira (sigue al jugador con la mirada) ----
     public float lookYaw, lookYawO, lookPitch, lookPitchO;
     public int lookTick = -1;
+    /** Solo cliente: velocidad horizontal suavizada en bloques/tick (para elegir caminar/correr). */
+    public float moveSpeed;
+    /** Solo cliente: reloj de la animación de caminar (avanza más rápido cuanto más rápido va). */
+    public float walkClock;
 
     public VerityEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
@@ -69,6 +102,8 @@ public class VerityEntity extends PathfinderMob {
         this.entityData.define(DATA_RAINBOW, false);
         this.entityData.define(DATA_VARIANT, 0);
         this.entityData.define(DATA_HOLDER, -1);
+        this.entityData.define(DATA_FOLLOW, Optional.empty());
+        this.entityData.define(DATA_LOOK, true);
     }
 
     public VerityState getState() {
@@ -95,8 +130,45 @@ public class VerityEntity extends PathfinderMob {
         return VerityVariant.byId(this.entityData.get(DATA_VARIANT));
     }
 
+    /** ¿Te sigue con la mirada? */
+    public boolean isLookingAtPlayers() {
+        return this.entityData.get(DATA_LOOK);
+    }
+
+    /**
+     * Servidor: enciende o apaga el seguimiento con la mirada. Al apagarlo se queda mirando hacia
+     * {@code facing} (el jugador que lo apagó), así la orientación se guarda con el mundo.
+     */
+    public void setLookingAtPlayers(boolean value, @Nullable Player facing) {
+        this.entityData.set(DATA_LOOK, value);
+        if (!value && facing != null) {
+            double dx = facing.getX() - getX(), dz = facing.getZ() - getZ();
+            if (dx * dx + dz * dz > 1.0E-4D) {
+                float yaw = (float) (Mth.atan2(dz, dx) * (180.0D / Math.PI)) - 90.0F;
+                this.setYRot(yaw);
+                this.yRotO = yaw;
+                this.yBodyRot = yaw;
+                this.yHeadRot = yaw;
+            }
+        }
+    }
+
+    /** Cambia la variante. Si cambia el tipo de modelo (esfera <-> humanoide) vuelve a "quieta". */
     public void setVariant(VerityVariant variant) {
+        VerityVariant.Type before = getVariant().type;
         this.entityData.set(DATA_VARIANT, variant.id);
+        if (before != variant.type) setState(VerityState.IDLE);
+    }
+
+    // ------------------------------------------------------------------
+    // Tamaño: la esfera es pequeña, la humanoide mide como un jugador
+    // ------------------------------------------------------------------
+
+    @Override
+    public EntityDimensions getDimensions(Pose pose) {
+        if (isHeld()) return EntityDimensions.scalable(0.2F, 0.2F); // en la mano no estorba al construir
+        VerityVariant.Type t = getVariant().type;
+        return EntityDimensions.scalable(t.width, t.height);
     }
 
     // ------------------------------------------------------------------
@@ -127,8 +199,8 @@ public class VerityEntity extends PathfinderMob {
     }
 
     /**
-     * Centro de la bola cuando está en la mano de {@code p}: delante y hacia el lado de su mano
-     * principal, a la altura del pecho. Se usa en el servidor (posición real) y en el cliente (dibujo suave).
+     * Punto de la mano de {@code p}: delante y hacia el lado de su mano principal, a la altura
+     * del pecho. Se usa en el servidor (posición real) y en el cliente (dibujo suave).
      */
     public static Vec3 handCenter(Player p, float partialTick) {
         double x = Mth.lerp((double) partialTick, p.xOld, p.getX());
@@ -144,12 +216,19 @@ public class VerityEntity extends PathfinderMob {
                 z + fz * forward + rz * lateral);
     }
 
+    /** Cuánto hay que bajar el punto de la mano para llegar a los "pies" de la entidad (en bloques). */
+    public static double heldAnchorDrop(VerityVariant variant) {
+        VerityVariant.Type t = variant.type;
+        return t.anchorY * t.scale * t.heldScale;
+    }
+
     /** Servidor: el jugador la coge. */
     public void pickUp(Player player) {
         if (this.level().isClientSide || isHeld()) return;
         this.entityData.set(DATA_HOLDER, player.getId());
         this.setDeltaMovement(Vec3.ZERO);
         this.fallDistance = 0.0F;
+        this.followMoving = false;
     }
 
     /** Servidor: el jugador la suelta donde apunta (o delante de él). */
@@ -191,9 +270,99 @@ public class VerityEntity extends PathfinderMob {
         this.fallDistance = 0.0F;
     }
 
+    // ------------------------------------------------------------------
+    // Seguir al jugador
+    // ------------------------------------------------------------------
+
+    @Nullable
+    public UUID getFollowOwner() {
+        return this.entityData.get(DATA_FOLLOW).orElse(null);
+    }
+
+    public boolean isFollowing() {
+        return getFollowOwner() != null;
+    }
+
+    /** Servidor: empieza a seguir a ese jugador, o deja de seguir si es null. */
+    public void setFollowOwner(@Nullable UUID owner) {
+        this.entityData.set(DATA_FOLLOW, Optional.ofNullable(owner));
+        if (owner == null) {
+            this.followMoving = false;
+            Vec3 dm = getDeltaMovement();
+            this.setDeltaMovement(0.0D, dm.y, 0.0D); // se para en seco
+        }
+    }
+
+    /** Servidor, una vez por tick: la mueve hacia su dueño. Se llama antes de la física del tick. */
+    private void serverFollowTick() {
+        UUID id = getFollowOwner();
+        if (id == null || isHeld()) {
+            followMoving = false;
+            return;
+        }
+        Player owner = this.level().getPlayerByUUID(id);
+        if (owner == null || owner.isSpectator() || !owner.isAlive()) {
+            followMoving = false;
+            Vec3 dm = getDeltaMovement();
+            setDeltaMovement(0.0D, dm.y, 0.0D);
+            return;
+        }
+
+        double dx = owner.getX() - getX(), dy = owner.getY() - getY(), dz = owner.getZ() - getZ();
+        double dist2 = dx * dx + dz * dz;
+
+        if (dist2 > FOLLOW_TELEPORT_DIST * FOLLOW_TELEPORT_DIST || Math.abs(dy) > 16.0D) {
+            teleportBehind(owner);
+            return;
+        }
+
+        if (followMoving) {
+            if (dist2 < FOLLOW_STOP * FOLLOW_STOP) followMoving = false;
+        } else if (dist2 > FOLLOW_START * FOLLOW_START) {
+            followMoving = true;
+        }
+
+        Vec3 dm = getDeltaMovement();
+        if (!followMoving) {
+            setDeltaMovement(0.0D, dm.y, 0.0D);
+            return;
+        }
+
+        double dist = Math.sqrt(dist2);
+        double ux = dx / dist, uz = dz / dist;
+        boolean ball = getVariant().type == VerityVariant.Type.BALL;
+
+        double speed = ball ? SPEED_HOP : (dist2 > FOLLOW_RUN_DIST * FOLLOW_RUN_DIST ? SPEED_RUN : SPEED_WALK);
+        double vy = dm.y;
+        if (this.onGround()) {
+            if (this.horizontalCollision) vy = 0.45D;   // hay un bloque delante: salta
+            else if (ball) vy = 0.30D;                  // la bola avanza a botes
+        }
+        setDeltaMovement(ux * speed, vy, uz * speed);
+        this.hasImpulse = true;
+
+        float yaw = (float) (Mth.atan2(dz, dx) * (180.0D / Math.PI)) - 90.0F;
+        this.setYRot(yaw);
+        this.yBodyRot = yaw;
+        this.yHeadRot = yaw;
+    }
+
+    private void teleportBehind(Player owner) {
+        Vec3 look = owner.getLookAngle();
+        this.moveTo(owner.getX() - look.x * 1.5D, owner.getY(), owner.getZ() - look.z * 1.5D, this.getYRot(), 0.0F);
+        if (!this.level().noCollision(this)) {
+            this.moveTo(owner.getX(), owner.getY(), owner.getZ(), this.getYRot(), 0.0F);
+        }
+        this.setDeltaMovement(Vec3.ZERO);
+        this.fallDistance = 0.0F;
+        this.followMoving = false;
+    }
+
     @Override
     public void tick() {
+        if (!this.level().isClientSide) serverFollowTick();
         super.tick();
+
         if (!this.level().isClientSide && isHeld()) {
             Player holder = getHolderPlayer();
             if (holder == null || holder.isRemoved() || !holder.isAlive() || holder.isSpectator()
@@ -202,10 +371,22 @@ public class VerityEntity extends PathfinderMob {
                 return;
             }
             Vec3 hand = handCenter(holder, 1.0F);
-            // la entidad se coloca con los "pies" por debajo del centro de la bola
-            this.setPos(hand.x, hand.y - 0.275D * 0.5D, hand.z);
+            // la entidad se coloca con los "pies" por debajo del punto de la mano
+            this.setPos(hand.x, hand.y - heldAnchorDrop(getVariant()), hand.z);
             this.setDeltaMovement(Vec3.ZERO);
             this.fallDistance = 0.0F;
+        }
+
+        if (this.level().isClientSide) {
+            // velocidad horizontal suavizada: decide si se dibuja quieta, caminando o corriendo
+            double dx = this.getX() - this.xo, dz = this.getZ() - this.zo;
+            float sp = (float) Math.sqrt(dx * dx + dz * dz);
+            this.moveSpeed += (sp - this.moveSpeed) * 0.5F;
+            if (this.moveSpeed > 0.02F) {
+                // el ciclo de caminar avanza más rápido cuanto más rápido va
+                float ref = this.moveSpeed > 0.25F ? 0.30F : 0.20F;
+                this.walkClock += (this.moveSpeed / ref) / 20.0F;
+            }
         }
     }
 
@@ -223,6 +404,9 @@ public class VerityEntity extends PathfinderMob {
     @Override
     public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
         super.onSyncedDataUpdated(key);
+        if (DATA_VARIANT.equals(key) || DATA_HOLDER.equals(key)) {
+            this.refreshDimensions(); // la hitbox depende de la variante y de si va en la mano
+        }
         if (DATA_STATE.equals(key) && this.level().isClientSide) {
             this.stateStartTick = this.tickCount;
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientHooks.onStateChanged(this));
@@ -238,7 +422,7 @@ public class VerityEntity extends PathfinderMob {
         return InteractionResult.sidedSuccess(this.level().isClientSide);
     }
 
-    // ---- Se queda quieta ----
+    // ---- Se queda quieta (salvo que la muevan nuestros métodos) ----
     @Override public boolean isNoAi() { return true; }
     @Override public boolean isPushable() { return false; }
     @Override protected void doPush(Entity entity) { }
@@ -251,7 +435,7 @@ public class VerityEntity extends PathfinderMob {
     @Override
     public void travel(Vec3 travelVector) {
         if (isHeld()) return; // en la mano la coloca el tick, sin física
-        super.travel(Vec3.ZERO); // solo gravedad, no camina
+        super.travel(Vec3.ZERO); // gravedad y rozamiento; el avance horizontal lo fija serverFollowTick
     }
 
     @Override
@@ -260,6 +444,9 @@ public class VerityEntity extends PathfinderMob {
         tag.putInt("VerityState", getStateId());
         tag.putBoolean("VerityRainbow", isRainbow());
         tag.putInt("VerityVariant", getVariant().id);
+        UUID owner = getFollowOwner();
+        if (owner != null) tag.putUUID("VerityFollow", owner);
+        tag.putBoolean("VerityLook", isLookingAtPlayers());
     }
 
     @Override
@@ -268,5 +455,9 @@ public class VerityEntity extends PathfinderMob {
         this.entityData.set(DATA_STATE, tag.getInt("VerityState"));
         this.entityData.set(DATA_RAINBOW, tag.getBoolean("VerityRainbow"));
         this.entityData.set(DATA_VARIANT, VerityVariant.byId(tag.getInt("VerityVariant")).id);
+        this.entityData.set(DATA_FOLLOW, tag.hasUUID("VerityFollow")
+                ? Optional.of(tag.getUUID("VerityFollow")) : Optional.empty());
+        // las guardadas antes de existir este ajuste no tienen la clave: por defecto te miran
+        this.entityData.set(DATA_LOOK, !tag.contains("VerityLook") || tag.getBoolean("VerityLook"));
     }
 }

@@ -5,7 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
-import com.verityball.VerityState;
+import com.verityball.VerityVariant;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
@@ -22,9 +22,8 @@ import java.util.Map;
  */
 public class VerityModel {
     private static final Logger LOGGER = LogUtils.getLogger();
-    private static final ResourceLocation FILE = new ResourceLocation("verityball", "models/verity_model.json");
-    private static VerityModel instance;
-    private static boolean failed;
+    private static final Map<VerityVariant.Type, VerityModel> CACHE = new HashMap<>();
+    private static final java.util.Set<VerityVariant.Type> FAILED = new java.util.HashSet<>();
 
     public static class Quad {
         public String tex;
@@ -37,6 +36,8 @@ public class VerityModel {
     public static class Bone {
         public String name;
         public float px, py, pz;
+        /** Rotación de reposo del hueso en grados (Blockbench). La animación se suma a esta. */
+        public float rx, ry, rz;
         public final List<Quad> quads = new ArrayList<>();
         public final List<Bone> children = new ArrayList<>();
     }
@@ -59,21 +60,35 @@ public class VerityModel {
     public final List<Bone> roots = new ArrayList<>();
     public final Map<String, Anim> anims = new HashMap<>();
 
-    public static VerityModel get() {
-        if (instance == null && !failed) {
-            try {
-                instance = load();
-            } catch (Exception e) {
-                failed = true;
-                LOGGER.error("No se pudo cargar el modelo de Verity", e);
-            }
+    /** Una animación en marcha: nombre y segundos desde su inicio. */
+    public static class Play {
+        public final String name;
+        public final float seconds;
+
+        public Play(String name, float seconds) {
+            this.name = name;
+            this.seconds = seconds;
         }
-        return instance;
     }
 
-    private static VerityModel load() throws Exception {
+    /** Modelo del tipo dado (se carga una sola vez). Devuelve null si no se pudo cargar. */
+    public static VerityModel get(VerityVariant.Type type) {
+        VerityModel m = CACHE.get(type);
+        if (m == null && !FAILED.contains(type)) {
+            try {
+                m = load(new ResourceLocation("verityball", "models/" + type.modelFile + ".json"));
+                CACHE.put(type, m);
+            } catch (Exception e) {
+                FAILED.add(type);
+                LOGGER.error("No se pudo cargar el modelo " + type.modelFile, e);
+            }
+        }
+        return m;
+    }
+
+    private static VerityModel load(ResourceLocation file) throws Exception {
         VerityModel m = new VerityModel();
-        try (BufferedReader reader = Minecraft.getInstance().getResourceManager().getResourceOrThrow(FILE).openAsReader()) {
+        try (BufferedReader reader = Minecraft.getInstance().getResourceManager().getResourceOrThrow(file).openAsReader()) {
             JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
 
             Map<String, Bone> byName = new HashMap<>();
@@ -85,6 +100,12 @@ public class VerityModel {
                 bone.px = piv.get(0).getAsFloat();
                 bone.py = piv.get(1).getAsFloat();
                 bone.pz = piv.get(2).getAsFloat();
+                if (bo.has("rot")) {
+                    JsonArray rot = bo.getAsJsonArray("rot");
+                    bone.rx = rot.get(0).getAsFloat();
+                    bone.ry = rot.get(1).getAsFloat();
+                    bone.rz = rot.get(2).getAsFloat();
+                }
                 for (JsonElement qe : bo.getAsJsonArray("quads")) bone.quads.add(parseQuad(qe.getAsJsonObject()));
                 byName.put(bone.name, bone);
                 if (bo.get("parent").isJsonNull()) m.roots.add(bone);
@@ -179,17 +200,18 @@ public class VerityModel {
 
     /**
      * Calcula la pose de todos los huesos. Por cada hueso y canal gana la animación
-     * activa con mayor prioridad (como las prioridades de Figura).
+     * con mayor prioridad; con la misma prioridad gana la que va después en la lista
+     * (así se puede poner primero la base y encima el movimiento o el estado).
      */
-    public Map<String, float[]> computePose(VerityState state, float seconds) {
+    public Map<String, float[]> computePose(List<Play> plays) {
         Map<String, float[]> pose = new HashMap<>();
         Map<String, int[]> best = new HashMap<>();
-        for (String animName : state.animations) {
-            Anim a = anims.get(animName);
+        for (Play play : plays) {
+            Anim a = anims.get(play.name);
             if (a == null) continue;
             float t;
-            if (a.loop && a.length > 0) t = seconds % a.length;
-            else t = Math.min(seconds, a.length);
+            if (a.loop && a.length > 0) t = play.seconds % a.length;
+            else t = Math.min(play.seconds, a.length);
             for (Map.Entry<String, Key[][]> e : a.tracks.entrySet()) {
                 float[] p = pose.computeIfAbsent(e.getKey(), k -> restPose());
                 int[] b = best.computeIfAbsent(e.getKey(), k -> new int[]{-1, -1, -1});

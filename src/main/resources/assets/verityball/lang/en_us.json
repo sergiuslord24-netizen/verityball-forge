@@ -24,5 +24,22 @@
   "key.verityball.pickup": "Pick up / put down Verity",
   "key.categories.verityball": "Verity Ball",
   "gui.verityball.hint.pickup": "[%s] Pick up Verity",
-  "gui.verityball.hint.drop": "[%s] Put Verity down"
+  "gui.verityball.hint.drop": "[%s] Put Verity down",
+  "gui.verityball.state.dead": "Dead (XX eyes)",
+  "gui.verityball.state.think": "Think",
+  "gui.verityball.state.sit": "Sit",
+  "gui.verityball.state.snap": "Snap",
+  "gui.verityball.follow": "Follow me",
+  "gui.verityball.look": "Look at me",
+  "gui.verityball.on": "ON",
+  "gui.verityball.off": "OFF",
+  "gui.verityball.hint.menu": "Follow me: walks after you · Look at me: tracks you with its gaze",
+  "variant.verityball.eclipse": "Verity Eclipse",
+  "variant.verityball.angel": "Verity Angel",
+  "variant.verityball.femverity": "FemVerity",
+  "variant.verityball.femverity_morada": "FemVerity Purple",
+  "item.verityball.verity_spawn_egg.eclipse": "Verity Eclipse Spawn Egg",
+  "item.verityball.verity_spawn_egg.angel": "Verity Angel Spawn Egg",
+  "item.verityball.verity_spawn_egg.femverity": "FemVerity Spawn Egg",
+  "item.verityball.verity_spawn_egg.femverity_morada": "FemVerity Purple Spawn Egg"
 }

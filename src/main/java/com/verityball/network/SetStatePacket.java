@@ -11,11 +11,13 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.function.Supplier;
 
 /**
- * Cliente -> servidor: cambiar animación (0..6), alternar arcoíris (action = TOGGLE_RAINBOW)
- * o fijar la variante (action = SET_VARIANT_BASE + id de variante).
+ * Cliente -> servidor: cambiar animación (id de VerityState), alternar arcoíris (TOGGLE_RAINBOW),
+ * alternar "seguirme" (TOGGLE_FOLLOW), alternar "mirarme" (TOGGLE_LOOK) o fijar la variante (SET_VARIANT_BASE + id de variante).
  */
 public class SetStatePacket {
     public static final int TOGGLE_RAINBOW = 100;
+    public static final int TOGGLE_FOLLOW = 101;
+    public static final int TOGGLE_LOOK = 102;
     public static final int SET_VARIANT_BASE = 200;
 
     private final int entityId;
@@ -46,10 +48,16 @@ public class SetStatePacket {
 
             if (msg.action == TOGGLE_RAINBOW) {
                 verity.setRainbow(!verity.isRainbow());
+            } else if (msg.action == TOGGLE_FOLLOW) {
+                // quien lo activa pasa a ser a quien sigue; pulsar otra vez la para
+                verity.setFollowOwner(verity.isFollowing() ? null : player.getUUID());
+            } else if (msg.action == TOGGLE_LOOK) {
+                verity.setLookingAtPlayers(!verity.isLookingAtPlayers(), player);
             } else if (msg.action >= SET_VARIANT_BASE) {
                 verity.setVariant(VerityVariant.byId(msg.action - SET_VARIANT_BASE));
             } else {
                 VerityState wanted = VerityState.byId(msg.action);
+                if (!wanted.isAvailableFor(verity.getVariant().type)) return; // ese estado no existe para este modelo
                 // pulsar de nuevo la animación activa la apaga
                 if (wanted == verity.getState() && wanted != VerityState.IDLE) wanted = VerityState.IDLE;
                 verity.setState(wanted);
