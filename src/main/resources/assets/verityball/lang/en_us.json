@@ -41,5 +41,7 @@
   "item.verityball.verity_spawn_egg.eclipse": "Verity Eclipse Spawn Egg",
   "item.verityball.verity_spawn_egg.angel": "Verity Angel Spawn Egg",
   "item.verityball.verity_spawn_egg.femverity": "FemVerity Spawn Egg",
-  "item.verityball.verity_spawn_egg.femverity_morada": "FemVerity Purple Spawn Egg"
+  "item.verityball.verity_spawn_egg.femverity_morada": "FemVerity Purple Spawn Egg",
+  "variant.verityball.verityexe": "VERITY.EXE",
+  "item.verityball.verity_spawn_egg.verityexe": "VERITY.EXE Spawn Egg"
 }
