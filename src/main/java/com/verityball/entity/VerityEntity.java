@@ -58,9 +58,9 @@ public class VerityEntity extends PathfinderMob {
 
     // ---- Seguir al jugador ----
     /** Empieza a andar cuando está a más de esta distancia... */
-    private static final double FOLLOW_START = 3.5D;
+    private static final double FOLLOW_START = 2.6D;
     /** ...y se para cuando llega a esta. */
-    private static final double FOLLOW_STOP = 2.2D;
+    private static final double FOLLOW_STOP = 1.6D;
     /** A partir de aquí corre (humanoide). */
     private static final double FOLLOW_RUN_DIST = 7.0D;
     /** Si se queda más lejos que esto, se teletransporta junto al jugador. */
@@ -286,7 +286,9 @@ public class VerityEntity extends PathfinderMob {
     /** Servidor: empieza a seguir a ese jugador, o deja de seguir si es null. */
     public void setFollowOwner(@Nullable UUID owner) {
         this.entityData.set(DATA_FOLLOW, Optional.ofNullable(owner));
-        if (owner == null) {
+        if (owner != null) {
+            this.followMoving = true; // al activarlo, camina hacia ti enseguida
+        } else {
             this.followMoving = false;
             Vec3 dm = getDeltaMovement();
             this.setDeltaMovement(0.0D, dm.y, 0.0D); // se para en seco
@@ -435,6 +437,13 @@ public class VerityEntity extends PathfinderMob {
     @Override
     public void travel(Vec3 travelVector) {
         if (isHeld()) return; // en la mano la coloca el tick, sin física
+        if (followMoving && !this.level().isClientSide) {
+            // Movimiento propio (sin la fricción ni el atributo de velocidad de los mobs): avanza lo que fijó serverFollowTick
+            this.move(net.minecraft.world.entity.MoverType.SELF, getDeltaMovement());
+            Vec3 d = getDeltaMovement();
+            setDeltaMovement(d.x, (d.y - 0.08D) * 0.98D, d.z);
+            return;
+        }
         super.travel(Vec3.ZERO); // gravedad y rozamiento; el avance horizontal lo fija serverFollowTick
     }
 
