@@ -35,6 +35,7 @@ public class VerityMenuScreen extends Screen {
     private int signature() {
         int s = verity.getStateId();
         s = s * 2 + (verity.isFollowing() ? 1 : 0);
+        s = s * 2 + (verity.isFleeing() ? 1 : 0);
         s = s * 2 + (verity.isLookingAtPlayers() ? 1 : 0);
         s = s * 2 + (verity.isRainbow() ? 1 : 0);
         return s * 31 + verity.getVariant().id;
@@ -48,7 +49,7 @@ public class VerityMenuScreen extends Screen {
     }
 
     private int panelTop(int rows) {
-        int total = 34 + (rows + 2) * (H + GAP) + 14;
+        int total = 34 + (rows + 3) * (H + GAP) + 14;
         return Math.max(8, this.height / 2 - total / 2);
     }
 
@@ -89,20 +90,19 @@ public class VerityMenuScreen extends Screen {
         }
         y += rows * (H + GAP) + 6;
 
-        // Interruptores: Seguirme / Mirarme (y Arcoíris en la esfera)
+        // Interruptores: fila 1 = Seguirme / Alejarse, fila 2 = Mirarme / Arcoíris (solo esfera)
         boolean rainbowAvailable = !type.equals(VerityVariant.Type.FEM);
-        int cols = rainbowAvailable ? 3 : 2;
-        int tw = (2 * W + GAP - (cols - 1) * GAP) / cols;
-        int x0 = left;
         this.addRenderableWidget(Button.builder(toggleLabel("gui.verityball.follow", verity.isFollowing()),
-                b -> send(SetStatePacket.TOGGLE_FOLLOW, false)).bounds(x0, y, tw, H).build());
-        x0 += tw + GAP;
+                b -> send(SetStatePacket.TOGGLE_FOLLOW, false)).bounds(left, y, W, H).build());
+        this.addRenderableWidget(Button.builder(toggleLabel("gui.verityball.flee", verity.isFleeing()),
+                b -> send(SetStatePacket.TOGGLE_FLEE, false)).bounds(right, y, W, H).build());
+        y += H + GAP;
+        int lw = rainbowAvailable ? W : 2 * W + GAP;
         this.addRenderableWidget(Button.builder(toggleLabel("gui.verityball.look", verity.isLookingAtPlayers()),
-                b -> send(SetStatePacket.TOGGLE_LOOK, false)).bounds(x0, y, tw, H).build());
+                b -> send(SetStatePacket.TOGGLE_LOOK, false)).bounds(left, y, lw, H).build());
         if (rainbowAvailable) {
-            x0 += tw + GAP;
             this.addRenderableWidget(Button.builder(toggleLabel("gui.verityball.rainbow", verity.isRainbow()),
-                    b -> send(SetStatePacket.TOGGLE_RAINBOW, false)).bounds(x0, y, tw, H).build());
+                    b -> send(SetStatePacket.TOGGLE_RAINBOW, false)).bounds(right, y, W, H).build());
         }
     }
 
@@ -145,7 +145,7 @@ public class VerityMenuScreen extends Screen {
         int top = panelTop(rows);
         int pw = 2 * W + GAP + 24;
         int px = this.width / 2 - pw / 2;
-        int total = 34 + (rows + 2) * (H + GAP) + 14;
+        int total = 34 + (rows + 3) * (H + GAP) + 14;
         g.fill(px, top, px + pw, top + total, 0xB0101018);
         g.renderOutline(px, top, pw, total, 0xFF000000 | shownVariant.color);
         g.drawCenteredString(this.font, this.title, this.width / 2, top + 10, 0xFED905);

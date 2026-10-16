@@ -7,7 +7,7 @@ Modelo y animaciones: RoseRocket.
 ## Variantes
 
 Verity, Falsity, Lovity, Morbosity, Peruanity, **Verity Eclipse** (negra) y **Verity Ángel** (blanca con halo 3D), **VERITY.EXE** (roja, demonio), más las humanoides **FemVerity** y **FemVerity Morada**.
-En el menú (clic derecho): gestos, **Seguirme** (camina tras ti / se para al desactivarlo), **Mirarme** (te sigue con la mirada), Arcoíris y el gesto **Muerto** (ojos XX) en las esferas.
+En el menú (clic derecho): gestos, **Seguirme** (camina tras ti / se para al desactivarlo), **Alejarse** (se aleja de ti), **Mirarme** (te sigue con la mirada), Arcoíris y el gesto **Muerto** (ojos XX) en las esferas.
 
 - **Huevos generadores:** cada variante tiene su huevo en la pestana de huevos del creativo.
 - **Menu:** clic derecho sobre ella y pulsa el boton **Variante** para cambiarla al instante.

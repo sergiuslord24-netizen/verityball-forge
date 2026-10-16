@@ -33,7 +33,7 @@
   "gui.verityball.look": "Look at me",
   "gui.verityball.on": "ON",
   "gui.verityball.off": "OFF",
-  "gui.verityball.hint.menu": "Follow me: walks after you · Look at me: tracks you with its gaze",
+  "gui.verityball.hint.menu": "Follow · Move away · Look at me",
   "variant.verityball.eclipse": "Verity Eclipse",
   "variant.verityball.angel": "Verity Angel",
   "variant.verityball.femverity": "FemVerity",
@@ -43,5 +43,6 @@
   "item.verityball.verity_spawn_egg.femverity": "FemVerity Spawn Egg",
   "item.verityball.verity_spawn_egg.femverity_morada": "FemVerity Purple Spawn Egg",
   "variant.verityball.verityexe": "VERITY.EXE",
-  "item.verityball.verity_spawn_egg.verityexe": "VERITY.EXE Spawn Egg"
+  "item.verityball.verity_spawn_egg.verityexe": "VERITY.EXE Spawn Egg",
+  "gui.verityball.flee": "Move away"
 }

@@ -18,6 +18,7 @@ public class SetStatePacket {
     public static final int TOGGLE_RAINBOW = 100;
     public static final int TOGGLE_FOLLOW = 101;
     public static final int TOGGLE_LOOK = 102;
+    public static final int TOGGLE_FLEE = 103;
     public static final int SET_VARIANT_BASE = 200;
 
     private final int entityId;
@@ -51,6 +52,8 @@ public class SetStatePacket {
             } else if (msg.action == TOGGLE_FOLLOW) {
                 // quien lo activa pasa a ser a quien sigue; pulsar otra vez la para
                 verity.setFollowOwner(verity.isFollowing() ? null : player.getUUID());
+            } else if (msg.action == TOGGLE_FLEE) {
+                verity.setFleeOwner(verity.isFleeing() ? null : player.getUUID());
             } else if (msg.action == TOGGLE_LOOK) {
                 verity.setLookingAtPlayers(!verity.isLookingAtPlayers(), player);
             } else if (msg.action >= SET_VARIANT_BASE) {
