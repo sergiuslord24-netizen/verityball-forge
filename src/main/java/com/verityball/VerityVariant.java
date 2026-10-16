@@ -16,14 +16,17 @@ public enum VerityVariant {
     MEXICANITY(10, "mexicanity", 0xE8A317, Type.BALL),
     FEMVERITY(7, "femverity", 0xE2B13C, Type.FEM),
     FEMVERITY_MORADA(8, "femverity_morada", 0x9B5BE8, Type.FEM),
-    FEMVERITY_ROSA(11, "femverity_rosa", 0xFF6FB5, Type.FEM);
+    FEMVERITY_ROSA(11, "femverity_rosa", 0xFF6FB5, Type.FEM),
+    OBESITY(12, "obesity", 0xF2C200, Type.OBESITY);
 
     /** Tipo de modelo: define el archivo, el tamaño y cómo se sostiene en la mano. */
     public enum Type {
         /** Esfera: models/verity_model.json. Escala 1, en la mano al 50 %, anclada por el centro de la bola. */
         BALL("verity_model", 1.0F, 0.5F, 4.4F / 16.0F, 0.6F, 0.6F),
         /** Humanoide: models/femverity_model.json (47 px de alto -> ~1,8 bloques). En la mano de pie sobre la palma. */
-        FEM("femverity_model", 0.6F, 0.2F, 0.0F, 0.6F, 1.8F);
+        FEM("femverity_model", 0.6F, 0.2F, 0.0F, 0.6F, 1.8F),
+        /** Gordito: models/obesity_model.json. Misma lógica de gestos que la esfera; centro de la barriga a 7 px. */
+        OBESITY("obesity_model", 0.8F, 0.4F, 7.2F / 16.0F, 1.1F, 1.25F);
 
         public final String modelFile;
         /** Escala del modelo (1 = un píxel de Blockbench son 1/16 de bloque). */

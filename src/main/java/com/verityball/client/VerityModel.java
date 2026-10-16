@@ -168,10 +168,12 @@ public class VerityModel {
         for (int i = 0; i < 20; i++) q.v[i] = v.get(i).getAsFloat();
         if (qo.has("n")) {
             JsonArray n = qo.getAsJsonArray("n");
+            boolean perVertex = n.size() >= 12; // 12 números = una normal por vértice (superficies suaves)
             for (int i = 0; i < 4; i++) {
-                q.n[i * 3] = n.get(0).getAsFloat();
-                q.n[i * 3 + 1] = n.get(1).getAsFloat();
-                q.n[i * 3 + 2] = n.get(2).getAsFloat();
+                int o = perVertex ? i * 3 : 0;
+                q.n[i * 3] = n.get(o).getAsFloat();
+                q.n[i * 3 + 1] = n.get(o + 1).getAsFloat();
+                q.n[i * 3 + 2] = n.get(o + 2).getAsFloat();
             }
         } else {
             // esfera: normal suave = dirección desde el centro

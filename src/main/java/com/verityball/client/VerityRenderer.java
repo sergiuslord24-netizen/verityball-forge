@@ -134,7 +134,7 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
         VerityVariant.Type type = entity.getVariant().type;
         float sinceState = Math.max(0f, entity.tickCount - entity.stateStartTick + partialTick) / 20.0F;
 
-        if (type == VerityVariant.Type.BALL) {
+        if (type != VerityVariant.Type.FEM) {
             for (String name : entity.getState().animationsFor(type)) plays.add(new VerityModel.Play(name, sinceState));
             return plays;
         }

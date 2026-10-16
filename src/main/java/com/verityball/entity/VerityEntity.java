@@ -343,13 +343,13 @@ public class VerityEntity extends PathfinderMob {
             }
             double distf = Math.max(Math.sqrt(dist2), 1.0E-3D);
             double fx = -dx / distf, fz = -dz / distf;
-            boolean ballf = getVariant().type == VerityVariant.Type.BALL;
+            boolean ballf = getVariant().type != VerityVariant.Type.FEM;
             double vyf = dmf.y;
             if (this.onGround()) {
                 if (this.horizontalCollision) vyf = 0.45D;
-                else if (ballf) vyf = 0.30D;
+                else if (ballf) vyf = hopVy();
             }
-            double sp = ballf ? SPEED_HOP : SPEED_WALK;
+            double sp = ballf ? hopSpeed() : SPEED_WALK;
             setDeltaMovement(fx * sp, vyf, fz * sp);
             this.hasImpulse = true;
             float yawf = (float) (Mth.atan2(fz, fx) * (180.0D / Math.PI)) - 90.0F;
@@ -378,13 +378,13 @@ public class VerityEntity extends PathfinderMob {
 
         double dist = Math.sqrt(dist2);
         double ux = dx / dist, uz = dz / dist;
-        boolean ball = getVariant().type == VerityVariant.Type.BALL;
+        boolean ball = getVariant().type != VerityVariant.Type.FEM;
 
-        double speed = ball ? SPEED_HOP : (dist2 > FOLLOW_RUN_DIST * FOLLOW_RUN_DIST ? SPEED_RUN : SPEED_WALK);
+        double speed = ball ? hopSpeed() : (dist2 > FOLLOW_RUN_DIST * FOLLOW_RUN_DIST ? SPEED_RUN : SPEED_WALK);
         double vy = dm.y;
         if (this.onGround()) {
             if (this.horizontalCollision) vy = 0.45D;   // hay un bloque delante: salta
-            else if (ball) vy = 0.30D;                  // la bola avanza a botes
+            else if (ball) vy = hopVy();                  // la bola avanza a botes
         }
         setDeltaMovement(ux * speed, vy, uz * speed);
         this.hasImpulse = true;
@@ -393,6 +393,15 @@ public class VerityEntity extends PathfinderMob {
         this.setYRot(yaw);
         this.yBodyRot = yaw;
         this.yHeadRot = yaw;
+    }
+
+    /** Velocidad y salto al avanzar: la esfera bota rápido, el gordito va a saltitos lentos. */
+    private double hopSpeed() {
+        return getVariant().type == VerityVariant.Type.OBESITY ? 0.11D : SPEED_HOP;
+    }
+
+    private double hopVy() {
+        return getVariant().type == VerityVariant.Type.OBESITY ? 0.20D : 0.30D;
     }
 
     private void teleportBehind(Player owner) {
