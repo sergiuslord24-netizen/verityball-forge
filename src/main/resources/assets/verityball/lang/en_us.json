@@ -44,5 +44,7 @@
   "item.verityball.verity_spawn_egg.femverity_morada": "FemVerity Purple Spawn Egg",
   "variant.verityball.verityexe": "VERITY.EXE",
   "item.verityball.verity_spawn_egg.verityexe": "VERITY.EXE Spawn Egg",
-  "gui.verityball.flee": "Move away"
+  "gui.verityball.flee": "Move away",
+  "variant.verityball.mexicanity": "Mexicanity",
+  "item.verityball.verity_spawn_egg.mexicanity": "Mexicanity Spawn Egg"
 }

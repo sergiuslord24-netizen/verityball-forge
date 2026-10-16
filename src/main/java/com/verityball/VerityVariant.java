@@ -13,6 +13,7 @@ public enum VerityVariant {
     ECLIPSE(5, "eclipse", 0x2A2A2A, Type.BALL),
     ANGEL(6, "angel", 0xF5F5F5, Type.BALL),
     VERITYEXE(9, "verityexe", 0xC80F0F, Type.BALL),
+    MEXICANITY(10, "mexicanity", 0xE8A317, Type.BALL),
     FEMVERITY(7, "femverity", 0xE2B13C, Type.FEM),
     FEMVERITY_MORADA(8, "femverity_morada", 0x9B5BE8, Type.FEM);
 

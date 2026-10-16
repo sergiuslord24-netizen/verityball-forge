@@ -44,5 +44,7 @@
   "item.verityball.verity_spawn_egg.femverity_morada": "Huevo generador de FemVerity Morada",
   "variant.verityball.verityexe": "VERITY.EXE",
   "item.verityball.verity_spawn_egg.verityexe": "Huevo generador de VERITY.EXE",
-  "gui.verityball.flee": "Alejarse"
+  "gui.verityball.flee": "Alejarse",
+  "variant.verityball.mexicanity": "Mexicanity",
+  "item.verityball.verity_spawn_egg.mexicanity": "Huevo generador de Mexicanity"
 }
