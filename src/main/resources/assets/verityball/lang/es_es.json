@@ -46,5 +46,6 @@
   "item.verityball.verity_spawn_egg.verityexe": "Huevo generador de VERITY.EXE",
   "gui.verityball.flee": "Alejarse",
   "variant.verityball.mexicanity": "Mexicanity",
-  "item.verityball.verity_spawn_egg.mexicanity": "Huevo generador de Mexicanity"
+  "item.verityball.verity_spawn_egg.mexicanity": "Huevo generador de Mexicanity",
+  "gui.verityball.state.clown": "Boca de payaso"
 }

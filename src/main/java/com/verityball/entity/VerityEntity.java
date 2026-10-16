@@ -160,9 +160,8 @@ public class VerityEntity extends PathfinderMob {
 
     /** Cambia la variante. Si cambia el tipo de modelo (esfera <-> humanoide) vuelve a "quieta". */
     public void setVariant(VerityVariant variant) {
-        VerityVariant.Type before = getVariant().type;
         this.entityData.set(DATA_VARIANT, variant.id);
-        if (before != variant.type) setState(VerityState.IDLE);
+        if (!getState().isAvailableFor(variant)) setState(VerityState.IDLE); // ese gesto no existe en la nueva variante
     }
 
     // ------------------------------------------------------------------

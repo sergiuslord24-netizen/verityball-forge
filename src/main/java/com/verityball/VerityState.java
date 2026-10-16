@@ -14,7 +14,9 @@ public enum VerityState {
     SIT(8, "sit", new String[]{}, new String[]{"verity_sit"}, null, false),
     SNAP(9, "snap", new String[]{}, new String[]{"verity_snap"}, null, false),
     /** Cara de muerto (ojos XX). */
-    DEAD(10, "dead", new String[]{"dead"}, new String[]{}, null, false);
+    DEAD(10, "dead", new String[]{"dead"}, new String[]{}, null, false),
+    /** Boca de payaso: solo existe para Morbosity. */
+    CLOWN(11, "clown", new String[]{"clown"}, new String[]{}, null, false);
 
     public final int id;
     public final String key;
@@ -42,6 +44,12 @@ public enum VerityState {
     public boolean isAvailableFor(VerityVariant.Type type) {
         if (this == IDLE) return true;
         return animationsFor(type).length > 0;
+    }
+
+    /** ¿Existe este estado para esa variante? (CLOWN solo para Morbosity.) */
+    public boolean isAvailableFor(VerityVariant variant) {
+        if (this == CLOWN && variant != VerityVariant.MORBOSITY) return false;
+        return isAvailableFor(variant.type);
     }
 
     public static VerityState byId(int id) {

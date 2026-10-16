@@ -58,7 +58,7 @@ public class VerityMenuScreen extends Screen {
         VerityVariant.Type type = shownVariant.type;
         List<VerityState> gestures = new ArrayList<>();
         for (VerityState st : VerityState.values()) {
-            if (st != VerityState.IDLE && st.isAvailableFor(type)) gestures.add(st);
+            if (st != VerityState.IDLE && st.isAvailableFor(shownVariant)) gestures.add(st);
         }
         gestures.add(VerityState.IDLE); // "Detener" al final
         int rows = (gestures.size() + 1) / 2;
@@ -140,7 +140,7 @@ public class VerityMenuScreen extends Screen {
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(g);
         int rows = 0;
-        for (VerityState st : VerityState.values()) if (st != VerityState.IDLE && st.isAvailableFor(shownVariant.type)) rows++;
+        for (VerityState st : VerityState.values()) if (st != VerityState.IDLE && st.isAvailableFor(shownVariant)) rows++;
         rows = (rows + 2) / 2;
         int top = panelTop(rows);
         int pw = 2 * W + GAP + 24;

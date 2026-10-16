@@ -60,7 +60,7 @@ public class SetStatePacket {
                 verity.setVariant(VerityVariant.byId(msg.action - SET_VARIANT_BASE));
             } else {
                 VerityState wanted = VerityState.byId(msg.action);
-                if (!wanted.isAvailableFor(verity.getVariant().type)) return; // ese estado no existe para este modelo
+                if (!wanted.isAvailableFor(verity.getVariant())) return; // ese estado no existe para este modelo
                 // pulsar de nuevo la animación activa la apaga
                 if (wanted == verity.getState() && wanted != VerityState.IDLE) wanted = VerityState.IDLE;
                 verity.setState(wanted);

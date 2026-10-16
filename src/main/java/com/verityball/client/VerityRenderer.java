@@ -180,6 +180,7 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
 
             boolean rainbow = entity.isRainbow() && !variant.isFem();
             boolean dead = entity.getState() == VerityState.DEAD;
+            boolean clown = entity.getState() == VerityState.CLOWN;
             float[] sphereColor = {1f, 1f, 1f};
             if (rainbow) {
                 float t = entity.tickCount + partialTick;
@@ -190,7 +191,7 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
             }
 
             for (VerityModel.Bone bone : model.roots) {
-                renderBone(bone, pose, ps, buffers, light, sphereColor, variant, rainbow, dead);
+                renderBone(bone, pose, ps, buffers, light, sphereColor, variant, rainbow, dead, clown);
             }
             ps.popPose();
         }
@@ -199,9 +200,10 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
 
     private void renderBone(VerityModel.Bone bone, Map<String, float[]> pose, PoseStack ps,
                             MultiBufferSource buffers, int light, float[] sphereColor,
-                            VerityVariant variant, boolean rainbow, boolean dead) {
+                            VerityVariant variant, boolean rainbow, boolean dead, boolean clown) {
         // La cara de muerto (XX) solo se dibuja en el estado DEAD
         if (bone.name.equals("mouth_dead") && !dead) return;
+        if (bone.name.equals("mouth_clown") && !(clown && variant == VerityVariant.MORBOSITY)) return;
         // Accesorios de una sola variante: el hueso "hat_<variante>" solo se dibuja en esa variante
         if (bone.name.startsWith("hat_") && !bone.name.equals("hat_" + variant.key)) return;
 
@@ -247,7 +249,7 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
         }
 
         for (VerityModel.Bone child : bone.children) {
-            renderBone(child, pose, ps, buffers, light, sphereColor, variant, rainbow, dead);
+            renderBone(child, pose, ps, buffers, light, sphereColor, variant, rainbow, dead, clown);
         }
         ps.popPose();
     }

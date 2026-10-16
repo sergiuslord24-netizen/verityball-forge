@@ -46,5 +46,6 @@
   "item.verityball.verity_spawn_egg.verityexe": "VERITY.EXE Spawn Egg",
   "gui.verityball.flee": "Move away",
   "variant.verityball.mexicanity": "Mexicanity",
-  "item.verityball.verity_spawn_egg.mexicanity": "Mexicanity Spawn Egg"
+  "item.verityball.verity_spawn_egg.mexicanity": "Mexicanity Spawn Egg",
+  "gui.verityball.state.clown": "Clown mouth"
 }
