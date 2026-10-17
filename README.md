@@ -53,3 +53,7 @@ El resultado queda en `build/libs/verityball-1.1.0.jar`.
 
 - Tamano de Verity: `VerityRenderer.java` -> `SCALE`.
 - Modelo y animaciones: `assets/verityball/models/verity_model.json`.
+
+
+## Teclas rápidas (para grabar)
+Apuntando a una Verity (a menos de ~7 bloques), sin abrir el menú: **5** seguirme (on/off) · **6** alejarse (on/off) · **7** hablar · **8** detener animación · **9** its coming · **0** bailar. Pulsar de nuevo la animación la apaga. Si no apuntas a ninguna, 5-9 siguen cambiando de casilla. El menú con clic derecho sigue igual.

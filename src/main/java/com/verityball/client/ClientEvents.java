@@ -4,6 +4,9 @@ import com.verityball.VerityBallMod;
 import com.verityball.entity.VerityEntity;
 import com.verityball.network.ModNetwork;
 import com.verityball.network.PickupPacket;
+import com.mojang.blaze3d.platform.InputConstants;
+import com.verityball.VerityState;
+import com.verityball.network.SetStatePacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
@@ -35,7 +38,9 @@ public class ClientEvents {
         boolean pressed = false;
         while (ModKeys.PICKUP.consumeClick()) pressed = true;
 
-        if (mc.screen != null || player.isSpectator()) return;
+        if (mc.screen != null || player.isSpectator()) { zeroDown = false; return; }
+
+        quickMenu(mc, player);
 
         VerityEntity held = findHeld(player);
         VerityEntity aimed = held == null ? findAimed(player) : null;
@@ -55,6 +60,55 @@ public class ClientEvents {
                 while (mc.options.keyInventory.consumeClick()) { }
             }
         }
+    }
+
+    private static boolean zeroDown = false;
+
+    /** Menú rápido para grabar: apuntando a Verity, teclas 5-0 (sin abrir el menú). */
+    private static void quickMenu(Minecraft mc, LocalPlayer player) {
+        int action = -1;
+        // 5..9 son las teclas de la barra de objetos 5..9: las "consumimos" antes de que cambien de casilla
+        VerityEntity target = null;
+        boolean any = false;
+        for (int i = 4; i <= 8; i++) {
+            if (mc.options.keyHotbarSlots[i].consumeClick()) {
+                if (!any) target = findAimedWithin(player, 7.5D);
+                any = true;
+                if (target != null) {
+                    switch (i) {
+                        case 4 -> action = SetStatePacket.TOGGLE_FOLLOW;
+                        case 5 -> action = SetStatePacket.TOGGLE_FLEE;
+                        case 6 -> action = VerityState.TALK.id;
+                        case 7 -> action = VerityState.IDLE.id;
+                        default -> action = VerityState.ITS_COMING.id;
+                    }
+                    ModNetwork.CHANNEL.sendToServer(new SetStatePacket(target.getId(), action));
+                } else {
+                    // no apuntamos a Verity: la tecla funciona como siempre (cambiar de casilla)
+                    player.getInventory().selected = i;
+                }
+            }
+        }
+        boolean zero = InputConstants.isKeyDown(mc.getWindow().getWindow(), 48 /* GLFW_KEY_0 */);
+        if (zero && !zeroDown) {
+            VerityEntity t = findAimedWithin(player, 7.5D);
+            if (t != null) ModNetwork.CHANNEL.sendToServer(new SetStatePacket(t.getId(), VerityState.DANCE.id));
+        }
+        zeroDown = zero;
+    }
+
+    private static VerityEntity findAimedWithin(LocalPlayer player, double reach) {
+        Vec3 eye = player.getEyePosition(1.0F);
+        Vec3 look = player.getViewVector(1.0F);
+        Vec3 end = eye.add(look.scale(reach));
+        AABB box = player.getBoundingBox().expandTowards(look.scale(reach)).inflate(1.0D);
+        EntityHitResult hit = ProjectileUtil.getEntityHitResult(player, eye, end, box,
+                e -> e instanceof VerityEntity v && !v.isHeld() && !e.isSpectator(), reach * reach);
+        if (hit == null) return null;
+        HitResult block = player.pick(reach, 1.0F, false);
+        if (block.getType() == HitResult.Type.BLOCK
+                && block.getLocation().distanceToSqr(eye) < hit.getLocation().distanceToSqr(eye)) return null;
+        return (VerityEntity) hit.getEntity();
     }
 
     /** La Verity que este jugador lleva en la mano, o null. */
