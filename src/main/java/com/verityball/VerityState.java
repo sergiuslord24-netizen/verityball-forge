@@ -52,6 +52,7 @@ public enum VerityState {
 
     /** ¿Existe este estado para esa variante? (CLOWN solo para Morbosity.) */
     public boolean isAvailableFor(VerityVariant variant) {
+        if (variant == VerityVariant.MONSTRUO) return this == IDLE || this == SHOCK; // el monstruo solo tiene la boca abierta
         if (this == CLOWN && variant != VerityVariant.MORBOSITY) return false;
         return isAvailableFor(variant.type);
     }
