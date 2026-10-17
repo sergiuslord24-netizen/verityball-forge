@@ -342,7 +342,10 @@ public class VerityEntity extends PathfinderMob {
                 return;
             }
             double distf = Math.max(Math.sqrt(dist2), 1.0E-3D);
-            double fx = -dx / distf, fz = -dz / distf;
+            double[] sepf = separation();
+            double fx = -dx / distf + sepf[0] * 1.5D, fz = -dz / distf + sepf[1] * 1.5D;
+            double fl = Math.max(Math.sqrt(fx * fx + fz * fz), 1.0E-3D);
+            fx /= fl; fz /= fl;
             boolean ballf = getVariant().type != VerityVariant.Type.FEM;
             double vyf = dmf.y;
             if (this.onGround()) {
@@ -364,23 +367,41 @@ public class VerityEntity extends PathfinderMob {
             return;
         }
 
+        // Cada una va a SU sitio alrededor del jugador (según su id) para no amontonarse todas en el mismo punto
+        double ang = getId() * 2.399963D;
+        double rad = 1.8D + (getId() % 3) * 0.7D;
+        double tx = owner.getX() + Math.cos(ang) * rad - getX();
+        double tz = owner.getZ() + Math.sin(ang) * rad - getZ();
+        double tdist = Math.sqrt(tx * tx + tz * tz);
+        double[] sep = separation();
+
         if (followMoving) {
-            if (dist2 < FOLLOW_STOP * FOLLOW_STOP) followMoving = false;
-        } else if (dist2 > FOLLOW_START * FOLLOW_START) {
+            if (tdist < 0.5D) followMoving = false;
+        } else if (tdist > 1.3D) {
             followMoving = true;
         }
 
         Vec3 dm = getDeltaMovement();
         if (!followMoving) {
-            setDeltaMovement(0.0D, dm.y, 0.0D);
+            // parada, pero si otra Verity está encima se aparta un poco
+            if (sep[2] > 0.0D) {
+                setDeltaMovement(sep[0] * 0.07D, dm.y, sep[1] * 0.07D);
+                this.hasImpulse = true;
+                followMoving = true;
+            } else {
+                setDeltaMovement(0.0D, dm.y, 0.0D);
+            }
             return;
         }
 
-        double dist = Math.sqrt(dist2);
-        double ux = dx / dist, uz = dz / dist;
+        double ux = tx / Math.max(tdist, 1.0E-3D), uz = tz / Math.max(tdist, 1.0E-3D);
+        ux += sep[0] * 1.5D; uz += sep[1] * 1.5D;
+        double ul = Math.max(Math.sqrt(ux * ux + uz * uz), 1.0E-3D);
+        ux /= ul; uz /= ul;
+        dx = ux; dz = uz;
         boolean ball = getVariant().type != VerityVariant.Type.FEM;
 
-        double speed = ball ? hopSpeed() : (dist2 > FOLLOW_RUN_DIST * FOLLOW_RUN_DIST ? SPEED_RUN : SPEED_WALK);
+        double speed = ball ? hopSpeed() : (tdist > FOLLOW_RUN_DIST ? SPEED_RUN : SPEED_WALK);
         double vy = dm.y;
         if (this.onGround()) {
             if (this.horizontalCollision) vy = 0.45D;   // hay un bloque delante: salta
@@ -393,6 +414,22 @@ public class VerityEntity extends PathfinderMob {
         this.setYRot(yaw);
         this.yBodyRot = yaw;
         this.yHeadRot = yaw;
+    }
+
+    /** Empuje para separarse de otras Verity cercanas: {x, z, cuántas hay encima (<1 bloque)}. */
+    private double[] separation() {
+        double sx = 0, sz = 0, n = 0;
+        for (VerityEntity o : this.level().getEntitiesOfClass(VerityEntity.class, this.getBoundingBox().inflate(1.2D), e -> e != this && !e.isHeld())) {
+            double ox = getX() - o.getX(), oz = getZ() - o.getZ();
+            double d = Math.sqrt(ox * ox + oz * oz);
+            if (d > 1.2D) continue;
+            if (d < 1.0E-3D) { ox = Math.cos(getId()); oz = Math.sin(getId()); d = 1.0D; }
+            double w = (1.2D - d) / 1.2D;
+            sx += ox / d * w; sz += oz / d * w; n++;
+        }
+        double l = Math.sqrt(sx * sx + sz * sz);
+        if (l > 1.0E-4D) { sx /= l; sz /= l; }
+        return new double[]{sx, sz, n};
     }
 
     /** Velocidad y salto al avanzar: la esfera bota rápido, el gordito va a saltitos lentos. */
