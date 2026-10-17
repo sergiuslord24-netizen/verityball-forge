@@ -14,6 +14,7 @@ public enum VerityVariant {
     ANGEL(6, "angel", 0xF5F5F5, Type.BALL),
     VERITYEXE(9, "verityexe", 0xC80F0F, Type.BALL),
     MEXICANITY(10, "mexicanity", 0xE8A317, Type.BALL),
+    SUSCRIBITY(13, "suscribity", 0xD61818, Type.BALL),
     FEMVERITY(7, "femverity", 0xE2B13C, Type.FEM),
     FEMVERITY_MORADA(8, "femverity_morada", 0x9B5BE8, Type.FEM),
     FEMVERITY_ROSA(11, "femverity_rosa", 0xFF6FB5, Type.FEM),
