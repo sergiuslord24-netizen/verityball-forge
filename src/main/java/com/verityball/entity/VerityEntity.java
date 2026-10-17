@@ -367,9 +367,15 @@ public class VerityEntity extends PathfinderMob {
             return;
         }
 
-        // Cada una va a SU sitio alrededor del jugador (según su id) para no amontonarse todas en el mismo punto
-        double ang = getId() * 2.399963D;
-        double rad = 1.8D + (getId() % 3) * 0.7D;
+        // Cada una va a SU sitio alrededor del jugador: se reparten por rango entre las que siguen al mismo dueño
+        int rank = 0;
+        for (VerityEntity o : this.level().getEntitiesOfClass(VerityEntity.class, owner.getBoundingBox().inflate(40.0D),
+                e -> e != this && !e.isHeld() && !e.isFleeing() && id.equals(e.getFollowOwner()))) {
+            if (o.getId() < getId()) rank++;
+        }
+        int ring = rank / 6;
+        double ang = Math.toRadians((rank % 6) * 60.0D + ring * 30.0D);
+        double rad = 2.4D + ring * 1.6D;
         double tx = owner.getX() + Math.cos(ang) * rad - getX();
         double tz = owner.getZ() + Math.sin(ang) * rad - getZ();
         double tdist = Math.sqrt(tx * tx + tz * tz);
@@ -419,12 +425,13 @@ public class VerityEntity extends PathfinderMob {
     /** Empuje para separarse de otras Verity cercanas: {x, z, cuántas hay encima (<1 bloque)}. */
     private double[] separation() {
         double sx = 0, sz = 0, n = 0;
-        for (VerityEntity o : this.level().getEntitiesOfClass(VerityEntity.class, this.getBoundingBox().inflate(1.2D), e -> e != this && !e.isHeld())) {
+        for (VerityEntity o : this.level().getEntitiesOfClass(VerityEntity.class, this.getBoundingBox().inflate(2.6D), e -> e != this && !e.isHeld())) {
             double ox = getX() - o.getX(), oz = getZ() - o.getZ();
             double d = Math.sqrt(ox * ox + oz * oz);
-            if (d > 1.2D) continue;
+            double minD = 1.0D + (this.getBbWidth() + o.getBbWidth()) * 0.5D; // para que los modelos no se atraviesen
+            if (d > minD) continue;
             if (d < 1.0E-3D) { ox = Math.cos(getId()); oz = Math.sin(getId()); d = 1.0D; }
-            double w = (1.2D - d) / 1.2D;
+            double w = (minD - d) / minD;
             sx += ox / d * w; sz += oz / d * w; n++;
         }
         double l = Math.sqrt(sx * sx + sz * sz);
