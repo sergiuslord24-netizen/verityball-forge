@@ -16,7 +16,11 @@ public enum VerityState {
     /** Cara de muerto (ojos XX). */
     DEAD(10, "dead", new String[]{"dead"}, new String[]{}, null, false),
     /** Boca de payaso: solo existe para Morbosity. */
-    CLOWN(11, "clown", new String[]{"clown"}, new String[]{}, null, false);
+    CLOWN(11, "clown", new String[]{"clown"}, new String[]{}, null, false),
+    /** Cara de grito / sorpresa. */
+    SHOCK(12, "shock", new String[]{"shock"}, new String[]{}, null, false),
+    /** Sonrisa con lengua afuera. */
+    TONGUE(13, "tongue", new String[]{"tongue"}, new String[]{}, null, false);
 
     public final int id;
     public final String key;

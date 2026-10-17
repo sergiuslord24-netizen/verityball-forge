@@ -48,6 +48,8 @@
   "variant.verityball.mexicanity": "Mexicanity",
   "item.verityball.verity_spawn_egg.mexicanity": "Huevo generador de Mexicanity",
   "gui.verityball.state.clown": "Boca de payaso",
+  "gui.verityball.state.shock": "Cara de grito",
+  "gui.verityball.state.tongue": "Lengua afuera",
   "variant.verityball.femverity_rosa": "FemVerity Rosa (vestido)",
   "item.verityball.verity_spawn_egg.femverity_rosa": "Huevo generador de FemVerity Rosa",
   "variant.verityball.obesity": "Obesity",

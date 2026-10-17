@@ -179,6 +179,7 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
             Map<String, float[]> pose = model.computePose(buildPlays(entity, partialTick));
 
             boolean rainbow = entity.isRainbow() && !variant.isFem();
+            curState = entity.getState();
             boolean dead = entity.getState() == VerityState.DEAD;
             boolean clown = entity.getState() == VerityState.CLOWN;
             float[] sphereColor = {1f, 1f, 1f};
@@ -198,12 +199,16 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
         super.render(entity, entityYaw, partialTick, ps, buffers, light); // nombre (name tag)
     }
 
+    private VerityState curState = VerityState.IDLE;
+
     private void renderBone(VerityModel.Bone bone, Map<String, float[]> pose, PoseStack ps,
                             MultiBufferSource buffers, int light, float[] sphereColor,
                             VerityVariant variant, boolean rainbow, boolean dead, boolean clown) {
         // La cara de muerto (XX) solo se dibuja en el estado DEAD
         if (bone.name.equals("mouth_dead") && !dead) return;
         if (bone.name.equals("mouth_clown") && !(clown && variant == VerityVariant.MORBOSITY)) return;
+        if (bone.name.equals("mouth_shock") && curState != VerityState.SHOCK) return;
+        if (bone.name.equals("mouth_tongue") && curState != VerityState.TONGUE) return;
         // Accesorios de una sola variante: el hueso "hat_<variante>" solo se dibuja en esa variante
         if (bone.name.startsWith("hat_") && !bone.name.equals("hat_" + variant.key)) return;
 
