@@ -346,7 +346,7 @@ public class VerityEntity extends PathfinderMob {
             double fx = -dx / distf + sepf[0] * 1.5D, fz = -dz / distf + sepf[1] * 1.5D;
             double fl = Math.max(Math.sqrt(fx * fx + fz * fz), 1.0E-3D);
             fx /= fl; fz /= fl;
-            boolean ballf = getVariant().type != VerityVariant.Type.FEM;
+            boolean ballf = hops();
             double vyf = dmf.y;
             if (this.onGround()) {
                 if (this.horizontalCollision) vyf = 0.45D;
@@ -405,7 +405,7 @@ public class VerityEntity extends PathfinderMob {
         double ul = Math.max(Math.sqrt(ux * ux + uz * uz), 1.0E-3D);
         ux /= ul; uz /= ul;
         dx = ux; dz = uz;
-        boolean ball = getVariant().type != VerityVariant.Type.FEM;
+        boolean ball = hops();
 
         double speed = ball ? hopSpeed() : (tdist > FOLLOW_RUN_DIST ? SPEED_RUN : SPEED_WALK);
         double vy = dm.y;
@@ -440,6 +440,12 @@ public class VerityEntity extends PathfinderMob {
     }
 
     /** Velocidad y salto al avanzar: la esfera bota rápido, el gordito va a saltitos lentos. */
+    /** Avanza a botes (esfera y gordito); el humanoide y el monstruo caminan. */
+    private boolean hops() {
+        VerityVariant.Type t = getVariant().type;
+        return t == VerityVariant.Type.BALL || t == VerityVariant.Type.OBESITY;
+    }
+
     private double hopSpeed() {
         return getVariant().type == VerityVariant.Type.OBESITY ? 0.11D : SPEED_HOP;
     }

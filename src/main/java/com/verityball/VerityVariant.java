@@ -18,7 +18,8 @@ public enum VerityVariant {
     FEMVERITY(7, "femverity", 0xE2B13C, Type.FEM),
     FEMVERITY_MORADA(8, "femverity_morada", 0x9B5BE8, Type.FEM),
     FEMVERITY_ROSA(11, "femverity_rosa", 0xFF6FB5, Type.FEM),
-    OBESITY(12, "obesity", 0xF2C200, Type.OBESITY);
+    OBESITY(12, "obesity", 0xF2C200, Type.OBESITY),
+    MONSTRUO(14, "monstruo", 0xB8A63A, Type.MONSTER);
 
     /** Tipo de modelo: define el archivo, el tamaño y cómo se sostiene en la mano. */
     public enum Type {
@@ -27,7 +28,9 @@ public enum VerityVariant {
         /** Humanoide: models/femverity_model.json (47 px de alto -> ~1,8 bloques). En la mano de pie sobre la palma. */
         FEM("femverity_model", 0.6F, 0.2F, 0.0F, 0.6F, 1.8F),
         /** Gordito: models/obesity_model.json. Misma lógica de gestos que la esfera; centro de la barriga a 7 px. */
-        OBESITY("obesity_model", 0.8F, 0.4F, 7.2F / 16.0F, 1.1F, 1.25F);
+        OBESITY("obesity_model", 0.8F, 0.4F, 7.2F / 16.0F, 1.1F, 1.25F),
+        /** Monstruo: alto y flaco (43 px de alto -> ~2,1 bloques), camina con las piernas. Gestos como la esfera. */
+        MONSTER("monster_model", 0.8F, 0.15F, 0.0F, 0.6F, 2.2F);
 
         public final String modelFile;
         /** Escala del modelo (1 = un píxel de Blockbench son 1/16 de bloque). */

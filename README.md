@@ -6,12 +6,12 @@ Modelo y animaciones: RoseRocket.
 
 ## Variantes
 
-Verity, Falsity, Lovity, Morbosity, Peruanity, **Verity Eclipse** (negra) y **Verity Ángel** (blanca con halo 3D), **VERITY.EXE** (roja, demonio), **Mexicanity** (amarilla con sombrero mexicano), **Suscribity** (roja con sonrisa), **Obesity** (Verity gordito con las manos en la barriga), más las humanoides **FemVerity**, **FemVerity Morada** y **FemVerity Rosa** (con vestido).
+Verity, Falsity, Lovity, Morbosity, Peruanity, **Verity Eclipse** (negra) y **Verity Ángel** (blanca con halo 3D), **VERITY.EXE** (roja, demonio), **Mexicanity** (amarilla con sombrero mexicano), **Suscribity** (roja con sonrisa), **Verity Monstruo** (alto y flaco, sonrisa enorme), **Obesity** (Verity gordito con las manos en la barriga), más las humanoides **FemVerity**, **FemVerity Morada** y **FemVerity Rosa** (con vestido).
 En el menú (clic derecho): gestos, **Seguirme** (camina tras ti / se para al desactivarlo), **Alejarse** (se aleja de ti), **Mirarme** (te sigue con la mirada), Arcoíris y el gesto **Muerto** (ojos XX) en las esferas.
 
 - **Huevos generadores:** cada variante tiene su huevo en la pestana de huevos del creativo.
 - **Menu:** clic derecho sobre ella y pulsa el boton **Variante** para cambiarla al instante.
-- **Comando:** `/summon verityball:verity ~ ~ ~ {VerityVariant:2}` (0 Verity, 1 Falsity, 2 Lovity, 3 Morbosity, 4 Peruanity, 5 Eclipse, 6 Ángel, 7 FemVerity, 8 FemVerity Morada, 11 FemVerity Rosa, 9 VERITY.EXE, 10 Mexicanity, 13 Suscribity).
+- **Comando:** `/summon verityball:verity ~ ~ ~ {VerityVariant:2}` (0 Verity, 1 Falsity, 2 Lovity, 3 Morbosity, 4 Peruanity, 5 Eclipse, 6 Ángel, 7 FemVerity, 8 FemVerity Morada, 11 FemVerity Rosa, 9 VERITY.EXE, 10 Mexicanity, 13 Suscribity, 14 Monstruo).
 
 ## Obtener el .jar
 

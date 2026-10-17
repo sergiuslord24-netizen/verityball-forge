@@ -109,7 +109,7 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
             double horizSq = dx * dx + dz * dz;
             if (horizSq + dy * dy < LOOK_RANGE * LOOK_RANGE && horizSq > 1.0E-4D) {
                 targetYaw = (float) (Mth.atan2(dz, dx) * (180.0D / Math.PI)) - 90.0F;
-                if (!fem) { // la humanoide solo gira el cuerpo; la esfera además inclina la cara
+                if (!fem && entity.getVariant().type != VerityVariant.Type.MONSTER) { // la humanoide solo gira el cuerpo; la esfera además inclina la cara
                     targetPitch = Mth.clamp((float) Math.toDegrees(Math.atan2(dy, Math.sqrt(horizSq))), -30.0F, 40.0F);
                 }
             }
@@ -134,6 +134,14 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
         VerityVariant.Type type = entity.getVariant().type;
         float sinceState = Math.max(0f, entity.tickCount - entity.stateStartTick + partialTick) / 20.0F;
 
+        if (type == VerityVariant.Type.MONSTER) {
+            for (String name : entity.getState().animationsFor(type)) plays.add(new VerityModel.Play(name, sinceState));
+            if (!entity.isHeld() && entity.moveSpeed > 0.02F) {
+                float step = entity.walkClock + partialTick * (entity.moveSpeed / 0.20F) / 20.0F;
+                plays.add(new VerityModel.Play("walk", step));
+            }
+            return plays;
+        }
         if (type != VerityVariant.Type.FEM) {
             for (String name : entity.getState().animationsFor(type)) plays.add(new VerityModel.Play(name, sinceState));
             return plays;
@@ -168,7 +176,7 @@ public class VerityRenderer extends EntityRenderer<VerityEntity> {
             ps.pushPose();
             ps.mulPose(Axis.YP.rotationDegrees(180.0F - yaw));
             ps.scale(scale, scale, scale);
-            if (!variant.isFem() && pitch != 0.0F) {
+            if (!variant.isFem() && variant.type != VerityVariant.Type.MONSTER && pitch != 0.0F) {
                 // inclinar la cara hacia arriba/abajo girando alrededor del centro de la esfera
                 float cy = variant.type.anchorY;
                 ps.translate(0.0F, cy, 0.0F);
